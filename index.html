@@ -221,6 +221,25 @@ button:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; bo
 .ed-bar .load { flex: 1; }
 .ed-bar button:disabled { opacity: .5; }
 
+.ed-mode { display: flex; justify-content: center; gap: 28px; padding-top: 10px; }
+.ed-mode button { font-family: var(--display); letter-spacing: .2em; font-size: 14px; color: var(--muted); padding: 4px 2px; position: relative; }
+.ed-mode button[aria-selected="true"] { color: var(--accent); }
+.ed-mode button[aria-selected="true"]::after { content: ""; position: absolute; left: 25%; right: 25%; bottom: -2px; height: 2px; border-radius: 2px; background: var(--accent); }
+.ed-adj { display: flex; flex-direction: column; gap: 8px; padding: 10px 0 2px; }
+.ed-slider { display: grid; grid-template-columns: 88px 1fr 42px; align-items: center; gap: 10px; padding: 0 max(16px, env(safe-area-inset-left, 0px)); }
+.ed-slider span { font-size: 14px; color: var(--fg); }
+.ed-slider output { font-family: var(--display); font-size: 17px; font-weight: 600; text-align: right; color: var(--accent); font-variant-numeric: tabular-nums; }
+.ed-slider input { width: 100%; accent-color: var(--accent); height: 28px; }
+.ed-tools { display: flex; gap: 6px; overflow-x: auto; padding: 4px max(14px, env(safe-area-inset-left, 0px)); scrollbar-width: none; }
+.ed-tools::-webkit-scrollbar { display: none; }
+.tool { flex: none; display: flex; flex-direction: column; align-items: center; gap: 3px; min-width: 62px; padding: 6px 4px; border-radius: 10px; }
+.tool b { font-family: var(--display); font-size: 15px; font-weight: 600; color: #c7beb2; font-variant-numeric: tabular-nums; }
+.tool span { font-size: 11px; color: var(--muted); white-space: nowrap; }
+.tool.changed b { color: var(--accent); }
+.tool[aria-pressed="true"] { background: #1d1915; }
+.tool[aria-pressed="true"] span { color: var(--fg); }
+.tool.reset b { color: var(--muted); }
+
 /* viewer */
 .viewer { background: #000; }
 .viewer img { flex: 1; min-height: 0; object-fit: contain; width: 100%; -webkit-touch-callout: default; -webkit-user-select: auto; user-select: auto; }
@@ -335,7 +354,19 @@ button:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; bo
     <button class="icon-btn" id="edAdd" aria-label="เพิ่มรูป">＋</button>
   </div>
   <div class="vf" id="edBox"><canvas id="edCv"></canvas><div class="ed-hint" id="edHint">กดค้างที่รูปเพื่อดูรูปเดิม</div></div>
+  <div class="ed-mode" role="tablist">
+    <button data-m="film" aria-selected="true">ฟิล์ม</button>
+    <button data-m="adj" aria-selected="false">ปรับแต่ง</button>
+  </div>
   <div class="ed-films" id="edFilms"></div>
+  <div class="ed-adj" id="edAdj" hidden>
+    <div class="ed-slider">
+      <span id="adjName"></span>
+      <input type="range" id="adjRange" min="-100" max="100" step="1" value="0" aria-label="ค่าปรับ">
+      <output id="adjVal">0</output>
+    </div>
+    <div class="ed-tools" id="edTools"></div>
+  </div>
   <div class="ed-thumbs" id="edThumbs"></div>
   <div class="ed-bar">
     <button class="pill" id="edSaveOne">บันทึกรูปนี้</button>
@@ -574,7 +605,7 @@ const lookOf = f => LOOK[f.nm] || LOOK["Provia 100F"];
 const VS = `attribute vec2 p; varying vec2 uv; void main(){ uv = vec2(p.x*.5+.5, .5-p.y*.5); gl_Position = vec4(p,0.,1.); }`;
 const FS = `precision highp float;
 varying vec2 uv; uniform sampler2D t; uniform vec2 res;
-uniform float ex, con, sat, temp, tint, fade, grain, vig, hal, seed, mono;
+uniform float ex, con, sat, temp, tint, fade, grain, vig, hal, seed, mono, hl, sd;
 uniform vec3 sh, hi, mw;
 float hash(vec2 p){ p = fract(p*vec2(123.34,456.21)); p += dot(p, p+45.32); return fract(p.x*p.y); }
 void main(){
@@ -597,6 +628,7 @@ void main(){
   if (con >= 0.) c = mix(c, sc, clamp(con*1.6, 0., 1.));
   else c = mix(c, vec3(.5)+(c-.5)*.6, clamp(-con*1.6, 0., 1.));
   l = dot(c, vec3(.299,.587,.114));
+  c += sd*.3*(1.-smoothstep(0., .6, l)) + hl*.3*smoothstep(.4, 1., l);
   c += sh*(1.-smoothstep(0., .55, l)) + hi*smoothstep(.45, 1., l);
   c += g*hal*vec3(1., .35, .15);
   c = mix(vec3(fade), vec3(1.-fade*.4), clamp(c, 0., 1.));
@@ -621,9 +653,9 @@ function makeRenderer(canvas) {
   [gl.TEXTURE_WRAP_S, gl.TEXTURE_WRAP_T].forEach(k => gl.texParameteri(gl.TEXTURE_2D, k, gl.CLAMP_TO_EDGE));
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
   const U = n => gl.getUniformLocation(pr, n);
-  const u = Object.fromEntries("res ex con sat temp tint fade grain vig hal seed mono sh hi mw".split(" ").map(n => [n, U(n)]));
+  const u = Object.fromEntries("res ex con sat temp tint fade grain vig hal seed mono sh hi mw hl sd".split(" ").map(n => [n, U(n)]));
   return {
-    draw(src, look, w, h) {
+    draw(src, look, w, h, extra) {
       if (canvas.width !== w || canvas.height !== h) { canvas.width = w; canvas.height = h; }
       gl.viewport(0, 0, w, h);
       gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB, gl.RGB, gl.UNSIGNED_BYTE, src);
@@ -632,6 +664,7 @@ function makeRenderer(canvas) {
       [["ex",ex],["con",con],["sat",sat],["temp",temp],["tint",tint],["fade",fade],["grain",grain],["vig",vig],["hal",hal]].forEach(([k, v]) => gl.uniform1f(u[k], v));
       gl.uniform1f(u.seed, Math.random() * 100);
       gl.uniform1f(u.mono, m ? 1 : 0);
+      gl.uniform1f(u.hl, extra ? extra.hl : 0); gl.uniform1f(u.sd, extra ? extra.sd : 0);
       gl.uniform3fv(u.sh, s); gl.uniform3fv(u.hi, h2);
       const w3 = MW[m || "M"], sum = w3[0] + w3[1] + w3[2];
       gl.uniform3f(u.mw, w3[0] / sum, w3[1] / sum, w3[2] / sum);
@@ -737,10 +770,10 @@ function drawCount() {
   $("shoot").disabled = cur.shot >= cur.exp;
 }
 
-async function develop(src, w, h, look) {
+async function develop(src, w, h, look, extra) {
   if (!full) { const c = document.createElement("canvas"); full = { c, r: makeRenderer(c) }; }
   if (!full.r) throw new Error("webgl");
-  full.r.draw(src, look || lookOf(curFilm()), w, h);
+  full.r.draw(src, look || lookOf(curFilm()), w, h, extra);
   return new Promise(res => full.c.toBlob(res, "image/jpeg", .9));
 }
 
@@ -866,7 +899,61 @@ $("shootRoll").onclick = newRoll;
 
 /* ---------------------------------------------------------------- import: develop photos already on the phone */
 const ID_LOOK = [0,0,1,0,0,0,0,0,0,[0,0,0],[0,0,0]];
-const ed = { imgs: [], i: 0, f: null, hold: false, r: null, ready: null };
+const ed = { imgs: [], i: 0, f: null, hold: false, r: null, ready: null, adj: {}, tool: "amt" };
+const TOOLS = [
+  ["amt", "ความแรงฟิล์ม", 0, 100, 100], ["ex", "แสง", -100, 100, 0], ["con", "คอนทราสต์", -100, 100, 0],
+  ["hl", "ไฮไลต์", -100, 100, 0], ["sd", "เงา", -100, 100, 0], ["temp", "อุณหภูมิสี", -100, 100, 0],
+  ["tint", "ทินต์", -100, 100, 0], ["sat", "ความอิ่มสี", -100, 100, 0], ["fade", "ซีดจาง", 0, 100, 0],
+  ["grain", "เกรน", 0, 100, 0], ["vig", "ขอบมืด", -100, 100, 0], ["hal", "แสงฟุ้ง", 0, 100, 0],
+];
+const adjOf = k => { const t = TOOLS.find(x => x[0] === k); return k in ed.adj ? ed.adj[k] : t[4]; };
+function edLook() {
+  const L = lookOf(ed.f), a = adjOf("amt") / 100, v = k => adjOf(k) / 100;
+  const mix = (x, y) => x + (y - x) * a;
+  const out = [
+    mix(0, L[0]) + v("ex") * 1.5, mix(0, L[1]) + v("con") * .5, Math.max(0, mix(1, L[2]) * (1 + v("sat"))),
+    mix(0, L[3]) + v("temp") * 1.2, mix(0, L[4]) + v("tint") * 1.2, Math.min(.35, mix(0, L[5]) + v("fade") * .15),
+    mix(0, L[6]) + v("grain") * .3, mix(0, L[7]) + v("vig") * .6, mix(0, L[8]) + v("hal"),
+    L[9].map(x => x * a), L[10].map(x => x * a),
+  ];
+  if (L[11]) out.push(L[11]);
+  return out;
+}
+const edExtra = () => ({ hl: adjOf("hl") / 100, sd: adjOf("sd") / 100 });
+function drawTools() {
+  const box = $("edTools"); box.innerHTML = "";
+  TOOLS.forEach(([k, label, , , d]) => {
+    const b = document.createElement("button"); b.className = "tool" + (adjOf(k) !== d ? " changed" : "");
+    b.setAttribute("aria-pressed", k === ed.tool);
+    const val = adjOf(k);
+    b.innerHTML = `<b>${k === "amt" ? val : (val > 0 ? "+" : "") + val}</b><span>${label}</span>`;
+    b.onclick = () => { ed.tool = k; buzz(); drawTools(); drawSlider(); };
+    box.append(b);
+  });
+  const r = document.createElement("button"); r.className = "tool reset"; r.innerHTML = `<b>↺</b><span>รีเซ็ตทั้งหมด</span>`;
+  r.onclick = () => { ed.adj = {}; ed.ready = null; buzz(); drawTools(); drawSlider(); renderEd(); };
+  box.append(r);
+}
+function drawSlider() {
+  const t = TOOLS.find(x => x[0] === ed.tool), rg = $("adjRange");
+  $("adjName").textContent = t[1];
+  rg.min = t[2]; rg.max = t[3]; rg.value = adjOf(t[0]);
+  $("adjVal").textContent = (t[0] !== "amt" && +rg.value > 0 ? "+" : "") + rg.value;
+}
+$("adjRange").addEventListener("input", e => {
+  ed.adj[ed.tool] = +e.target.value; ed.ready = null;
+  $("adjVal").textContent = (ed.tool !== "amt" && +e.target.value > 0 ? "+" : "") + e.target.value;
+  renderEd();
+});
+$("adjRange").addEventListener("change", drawTools);
+$("adjRange").addEventListener("dblclick", () => { delete ed.adj[ed.tool]; drawSlider(); drawTools(); renderEd(); });
+document.querySelectorAll(".ed-mode button").forEach(b => b.onclick = () => {
+  const adj = b.dataset.m === "adj";
+  document.querySelectorAll(".ed-mode button").forEach(x => x.setAttribute("aria-selected", x === b));
+  $("edFilms").hidden = adj; $("edAdj").hidden = !adj;
+  if (adj) { drawTools(); drawSlider(); }
+  renderEd();
+});
 function startImport(f) { ed.f = f || ed.f || list()[idx]; $("filePick").click(); }
 $("importRoll").onclick = () => startImport(list()[idx]);
 $("labImport").onclick = () => startImport(ed.f || list()[idx]);
@@ -928,7 +1015,7 @@ function renderEd() {
   $("edMaker").textContent = ed.f.mk; $("edFilm").textContent = ed.f.nm;
   const box = $("edBox"), dpr = Math.min(devicePixelRatio || 1, 2);
   const sc = Math.min(box.clientWidth / im.w, box.clientHeight / im.h, 1);
-  ed.r.draw(im.c, ed.hold ? ID_LOOK : lookOf(ed.f), Math.round(im.w * sc * dpr), Math.round(im.h * sc * dpr));
+  ed.r.draw(im.c, ed.hold ? ID_LOOK : edLook(), Math.round(im.w * sc * dpr), Math.round(im.h * sc * dpr), ed.hold ? null : edExtra());
   $("edCv").style.width = Math.round(im.w * sc) + "px";
   const hint = $("edHint"); hint.classList.toggle("orig", ed.hold); hint.textContent = ed.hold ? "รูปเดิม" : "กดค้างที่รูปเพื่อดูรูปเดิม";
 }
@@ -941,7 +1028,7 @@ addEventListener("resize", () => { if (!$("edit").hidden) renderEd(); });
 async function renderFiles(ims) {
   const out = [];
   for (const im of ims) {
-    const blob = await develop(im.c, im.w, im.h, lookOf(ed.f));
+    const blob = await develop(im.c, im.w, im.h, edLook(), edExtra());
     out.push({ blob, file: new File([blob], `${im.name}-${ed.f.nm.replace(/\s+/g, "")}.jpg`, { type: "image/jpeg" }) });
   }
   return out;
@@ -955,7 +1042,7 @@ async function keepImported(done) {
 // iPhone only opens the share sheet straight from a tap, so: first tap develops, the share follows at once,
 // and if Safari refuses because the tap went stale, the button turns into "tap again to save".
 async function edSave(which, btn) {
-  const key = which + ":" + ed.i + ":" + ed.f.nm;
+  const key = which + ":" + ed.i + ":" + ed.f.nm + ":" + JSON.stringify(ed.adj);
   if (ed.ready && ed.ready.key === key) { const files = ed.ready.files; ed.ready = null; resetBtns(); return saveFiles(files); }
   const ims = which === "all" ? ed.imgs : [ed.imgs[ed.i]];
   const label = btn.textContent; btn.disabled = true; btn.textContent = "กำลังล้าง…";
@@ -976,7 +1063,7 @@ async function edSave(which, btn) {
 function resetBtns() { drawThumbs(); }
 $("edSaveAll").onclick = e => edSave("all", e.currentTarget);
 $("edSaveOne").onclick = e => edSave("one", e.currentTarget);
-function closeEdit() { $("edit").hidden = true; ed.imgs = []; ed.i = 0; ed.ready = null; }
+function closeEdit() { $("edit").hidden = true; ed.imgs = []; ed.i = 0; ed.ready = null; ed.adj = {}; }
 $("edClose").onclick = closeEdit;
 $("shoot").onclick = shoot;
 $("camClose").onclick = closeCam;
