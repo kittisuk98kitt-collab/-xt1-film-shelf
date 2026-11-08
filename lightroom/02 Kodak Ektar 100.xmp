@@ -4,7 +4,7 @@
     xmlns:crs="http://ns.adobe.com/camera-raw-settings/1.0/"
    crs:PresetType="Normal"
    crs:Cluster=""
-   crs:UUID="86807B6586F84A329A5DCBBB8FA5F45A"
+   crs:UUID="799806C5652644D98F7A90739E3FE4B5"
    crs:SupportsAmount2="True"
    crs:SupportsAmount="True"
    crs:SupportsColor="True"
@@ -20,20 +20,20 @@
    crs:Version="16.0"
    crs:ProcessVersion="11.0"
    crs:Exposure2012="+0.00"
-   crs:Contrast2012="+15"
-   crs:Highlights2012="-10"
-   crs:Shadows2012="-10"
+   crs:Contrast2012="+10"
+   crs:Highlights2012="-15"
+   crs:Shadows2012="+8"
    crs:Whites2012="0"
    crs:Blacks2012="0"
    crs:Clarity2012="0"
    crs:Dehaze="0"
    crs:Texture="0"
-   crs:Vibrance="+9"
-   crs:Saturation="+18"
-   crs:IncrementalTemperature="+3"
+   crs:Vibrance="+11"
+   crs:Saturation="+25"
+   crs:IncrementalTemperature="0"
    crs:IncrementalTint="0"
-   crs:GrainAmount="4"
-   crs:GrainSize="24"
+   crs:GrainAmount="12"
+   crs:GrainSize="27"
    crs:GrainFrequency="50"
    crs:PostCropVignetteAmount="-12"
    crs:PostCropVignetteMidpoint="45"
@@ -42,11 +42,11 @@
    crs:PostCropVignetteStyle="1"
    crs:PostCropVignetteHighlightContrast="0"
    crs:ConvertToGrayscale="False"
-   crs:ColorGradeShadowHue="240"
-   crs:ColorGradeShadowSat="15"
+   crs:ColorGradeShadowHue="0"
+   crs:ColorGradeShadowSat="2"
    crs:ColorGradeShadowLum="0"
-   crs:ColorGradeHighlightHue="30"
-   crs:ColorGradeHighlightSat="17"
+   crs:ColorGradeHighlightHue="36"
+   crs:ColorGradeHighlightSat="7"
    crs:ColorGradeHighlightLum="0"
    crs:ColorGradeMidtoneHue="0"
    crs:ColorGradeMidtoneSat="0"
@@ -85,11 +85,8 @@
    </crs:Description>
    <crs:ToneCurvePV2012>
     <rdf:Seq>
-      <rdf:li>0, 0</rdf:li>
-      <rdf:li>64, 57</rdf:li>
-      <rdf:li>128, 128</rdf:li>
-      <rdf:li>192, 199</rdf:li>
-      <rdf:li>255, 255</rdf:li>
+      <rdf:li>0, 5</rdf:li>
+      <rdf:li>255, 218</rdf:li>
     </rdf:Seq>
    </crs:ToneCurvePV2012>
   </rdf:Description>

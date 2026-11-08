@@ -4,7 +4,7 @@
     xmlns:crs="http://ns.adobe.com/camera-raw-settings/1.0/"
    crs:PresetType="Normal"
    crs:Cluster=""
-   crs:UUID="039CE20E5E2341B1AF6324966CAD4584"
+   crs:UUID="4396D75E72F5482C9C54A3EA8457CE1C"
    crs:SupportsAmount2="True"
    crs:SupportsAmount="True"
    crs:SupportsColor="True"
@@ -20,33 +20,33 @@
    crs:Version="16.0"
    crs:ProcessVersion="11.0"
    crs:Exposure2012="+0.10"
-   crs:Contrast2012="+9"
-   crs:Highlights2012="-10"
-   crs:Shadows2012="-10"
+   crs:Contrast2012="+5"
+   crs:Highlights2012="-15"
+   crs:Shadows2012="+8"
    crs:Whites2012="0"
-   crs:Blacks2012="+2"
+   crs:Blacks2012="0"
    crs:Clarity2012="0"
    crs:Dehaze="0"
    crs:Texture="0"
-   crs:Vibrance="+4"
-   crs:Saturation="+7"
-   crs:IncrementalTemperature="+12"
-   crs:IncrementalTint="+1"
-   crs:GrainAmount="13"
-   crs:GrainSize="27"
+   crs:Vibrance="+6"
+   crs:Saturation="+13"
+   crs:IncrementalTemperature="0"
+   crs:IncrementalTint="0"
+   crs:GrainAmount="21"
+   crs:GrainSize="32"
    crs:GrainFrequency="50"
-   crs:PostCropVignetteAmount="-15"
+   crs:PostCropVignetteAmount="-12"
    crs:PostCropVignetteMidpoint="45"
    crs:PostCropVignetteFeather="60"
    crs:PostCropVignetteRoundness="0"
    crs:PostCropVignetteStyle="1"
    crs:PostCropVignetteHighlightContrast="0"
    crs:ConvertToGrayscale="False"
-   crs:ColorGradeShadowHue="45"
+   crs:ColorGradeShadowHue="35"
    crs:ColorGradeShadowSat="11"
    crs:ColorGradeShadowLum="0"
-   crs:ColorGradeHighlightHue="45"
-   crs:ColorGradeHighlightSat="39"
+   crs:ColorGradeHighlightHue="41"
+   crs:ColorGradeHighlightSat="32"
    crs:ColorGradeHighlightLum="0"
    crs:ColorGradeMidtoneHue="0"
    crs:ColorGradeMidtoneSat="0"
@@ -85,11 +85,8 @@
    </crs:Description>
    <crs:ToneCurvePV2012>
     <rdf:Seq>
-      <rdf:li>0, 8</rdf:li>
-      <rdf:li>64, 58</rdf:li>
-      <rdf:li>128, 128</rdf:li>
-      <rdf:li>192, 198</rdf:li>
-      <rdf:li>255, 252</rdf:li>
+      <rdf:li>0, 7</rdf:li>
+      <rdf:li>255, 218</rdf:li>
     </rdf:Seq>
    </crs:ToneCurvePV2012>
   </rdf:Description>
