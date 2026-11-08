@@ -1,0 +1,1005 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<title>X-T1 Film Shelf</title>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Film Shelf">
+<meta name="theme-color" content="#0b0a09">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="manifest" href="manifest.webmanifest">
+<style>html{padding-top:env(safe-area-inset-top,0px)}</style>
+
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Barlow:wght@400;500;600&family=IBM+Plex+Sans+Thai:wght@400;500;600&display=swap">
+<style>
+/* Layout: one full-height phone screen — top bar, shelf tabs, canister stage that takes the free height, film card, LOAD bar; the recipe slides up as a sheet */
+:root {
+  --bg: #0b0a09;
+  --stage: #171513;
+  --sheet: #12100e;
+  --fg: #f1ece4;
+  --muted: #8f877c;
+  --line: #2c2823;
+  --accent: #eca834;
+  --rec: #e2453c;
+  --display: "Barlow Condensed", "IBM Plex Sans Thai", "Arial Narrow", sans-serif;
+  --body: "Barlow", "IBM Plex Sans Thai", -apple-system, system-ui, sans-serif;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+html, body { height: 100%; }
+body {
+  background: var(--bg); color: var(--fg); font-family: var(--body); font-size: 15px; margin: 0;
+  overflow: hidden; overscroll-behavior: none; -webkit-user-select: none; user-select: none; touch-action: manipulation;
+}
+button { font: inherit; color: inherit; background: none; border: 0; cursor: pointer; padding: 0; }
+button:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 6px; }
+
+.app { height: 100%; max-width: 560px; margin: 0 auto; display: flex; flex-direction: column;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 10px 0; }
+
+.top { display: flex; align-items: center; justify-content: space-between; font-family: var(--display); letter-spacing: .14em; font-size: 13px; color: var(--muted); }
+.brand { display: flex; align-items: center; gap: 10px; }
+.brand b { color: var(--fg); font-weight: 600; }
+.hex { width: 14px; height: 14px; border: 2px solid var(--accent); clip-path: polygon(25% 3%,75% 3%,100% 50%,75% 97%,25% 97%,0 50%); }
+.sep { width: 1px; height: 14px; background: var(--line); }
+.roll-badge { font-family: var(--display); font-size: 13px; letter-spacing: .14em; color: var(--muted); display: flex; align-items: center; gap: 6px; }
+.roll-badge b { color: var(--fg); font-weight: 600; font-variant-numeric: tabular-nums; }
+
+.tabs { display: flex; justify-content: center; gap: 24px; margin-top: 12px; }
+.tab { font-family: var(--display); font-size: 14px; letter-spacing: .24em; color: var(--muted); padding: 6px 0 8px; position: relative; }
+.tab[aria-selected="true"] { color: var(--accent); }
+.tab[aria-selected="true"]::after { content: ""; position: absolute; left: 30%; right: 34%; bottom: 0; height: 2px; background: var(--accent); border-radius: 2px; }
+
+.stage { position: relative; flex: 1 1 auto; min-height: 230px; max-height: 340px; margin-top: 6px; border-radius: 16px; overflow: hidden; touch-action: pan-y; isolation: isolate;
+  background: radial-gradient(ellipse 50% 72% at 50% 44%, #2a2622 0%, var(--stage) 55%, var(--bg) 100%); }
+.stage::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 70px; background: linear-gradient(transparent, rgba(0,0,0,.55)); pointer-events: none; }
+.floor { position: absolute; left: 50%; bottom: 30px; width: 220px; height: 26px; transform: translateX(-50%); border-radius: 50%; background: radial-gradient(closest-side, rgba(255,240,215,.13), transparent); }
+.can { position: absolute; left: 50%; bottom: 42px; width: 112px; margin-left: -56px; transform-origin: 50% 100%;
+  transition: transform .55s cubic-bezier(.2,.9,.25,1.05), opacity .45s, filter .45s; will-change: transform; }
+.cap { height: 12px; margin: 0 -3px; border-radius: 6px / 4px; background: linear-gradient(90deg, #6d6d6d, #e9e9e9 22%, #fafafa 34%, #9a9a9a 62%, #555 100%); position: relative; z-index: 2; }
+.cap.top::before { content: ""; position: absolute; left: 50%; top: -14px; width: 30px; height: 16px; margin-left: -15px; border-radius: 4px 4px 2px 2px; background: linear-gradient(90deg, #111, #4a4a4a 40%, #1a1a1a); }
+.body { height: 148px; position: relative; overflow: hidden; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; text-align: center; }
+.body::after { content: ""; position: absolute; inset: 0; background: linear-gradient(90deg, rgba(0,0,0,.42), rgba(255,255,255,.18) 24%, rgba(255,255,255,.04) 40%, rgba(0,0,0,.08) 66%, rgba(0,0,0,.5)); pointer-events: none; }
+.band { position: absolute; left: 0; right: 0; height: 16px; }
+.mk { font-family: var(--display); font-size: 9px; letter-spacing: .2em; font-weight: 600; position: relative; text-transform: uppercase; }
+.nm { font-family: var(--display); font-size: 17px; font-weight: 700; letter-spacing: .06em; line-height: 1; position: relative; text-transform: uppercase; max-width: 96px; }
+.iso { font-family: var(--display); font-size: 40px; font-weight: 700; line-height: .92; position: relative; }
+.fmt { font-family: var(--display); font-size: 9px; letter-spacing: .12em; position: relative; opacity: .8; }
+.shadow { position: absolute; left: 6px; right: 6px; bottom: -14px; height: 14px; border-radius: 50%; background: radial-gradient(closest-side, rgba(0,0,0,.65), transparent); }
+.leader { position: absolute; left: 50%; bottom: 62px; height: 92px; width: 0; transition: width .9s cubic-bezier(.3,.8,.3,1); z-index: 0;
+  background:
+    repeating-linear-gradient(90deg, transparent 0 6px, var(--bg) 6px 12px) top 8px left 0 / 100% 8px no-repeat,
+    repeating-linear-gradient(90deg, transparent 0 6px, var(--bg) 6px 12px) bottom 8px left 0 / 100% 8px no-repeat,
+    linear-gradient(180deg, #3a2a20, #5b4232 50%, #3a2a20);
+  border-radius: 0 3px 3px 0; opacity: .92; }
+.stage.loaded .leader { width: 62%; }
+
+.dots { display: flex; justify-content: center; gap: 5px; margin-top: 10px; }
+.dot { width: 4px; height: 4px; border-radius: 2px; background: var(--line); transition: width .3s, background .3s; }
+.dot.on { width: 16px; background: var(--accent); }
+
+.card { text-align: center; display: flex; flex-direction: column; align-items: center; gap: 3px; margin-top: 10px; }
+.maker { font-family: var(--display); color: var(--accent); letter-spacing: .3em; font-size: 13px; font-weight: 600; text-transform: uppercase; }
+.title { font-family: var(--display); font-weight: 600; font-size: clamp(32px, 10vw, 46px); line-height: 1.02; text-wrap: balance; }
+.desc { color: #bdb4a8; font-size: 15px; }
+.chips { display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap; justify-content: center; }
+.chip { border: 1px solid var(--line); border-radius: 999px; padding: 4px 12px; font-family: var(--display); font-size: 11px; letter-spacing: .18em; color: var(--muted); display: flex; gap: 7px; align-items: baseline; }
+.chip b { color: var(--fg); font-size: 17px; letter-spacing: .02em; font-weight: 600; }
+.chip.hot { border-color: #6a4c1a; }
+.chip.hot b { color: var(--accent); }
+
+.bar { margin-top: auto; padding-top: 14px; padding-bottom: calc(14px + env(safe-area-inset-bottom, 0px)); display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.nav { width: 52px; height: 52px; border-radius: 50%; border: 1px solid #3a352f; font-size: 18px; color: #c7beb2; display: grid; place-items: center; }
+.nav:active { background: #1d1a17; }
+.load { flex: 1; height: 52px; background: var(--accent); color: #1a1206; font-family: var(--display); font-weight: 700; letter-spacing: .22em; font-size: 17px; border-radius: 999px; }
+.load:active { filter: brightness(.92); }
+
+/* recipe sheet */
+.sheet { position: fixed; inset: 0; background: var(--sheet); z-index: 100; transform: translateY(102%); transition: transform .45s cubic-bezier(.2,.85,.25,1);
+  display: flex; flex-direction: column; padding-top: env(safe-area-inset-top, 0px); }
+.sheet.open { transform: none; }
+.sheet-in { max-width: 560px; width: 100%; margin: 0 auto; flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; -webkit-user-select: text; user-select: text;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 10px calc(24px + env(safe-area-inset-bottom, 0px)); display: flex; flex-direction: column; gap: 16px; }
+.sheet-in > * { flex-shrink: 0; }
+.back { align-self: flex-start; font-family: var(--display); letter-spacing: .16em; font-size: 14px; color: var(--accent); padding: 8px 0; }
+.rh .k { font-family: var(--display); color: var(--accent); letter-spacing: .3em; font-size: 12px; }
+.rh h2 { margin: 4px 0 4px; font-family: var(--display); font-weight: 600; font-size: 32px; line-height: 1.05; }
+.rh p { margin: 0; color: var(--muted); font-size: 14px; }
+.rec { display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: var(--rec); margin-right: 6px; vertical-align: 1px; }
+.qmenu { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1px; background: var(--line); border: 1px solid var(--line); border-radius: 12px; overflow: hidden; }
+.cell { background: #0e0c0b; padding: 11px 12px 13px; display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.cell .l { font-family: var(--display); font-size: 11px; letter-spacing: .16em; color: var(--muted); text-transform: uppercase; }
+.cell .v { font-family: var(--display); font-size: 22px; font-weight: 600; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.cell .v.dim { color: #4f4942; }
+.cell .h { font-size: 12px; color: #6d665c; }
+.cell.wide { grid-column: span 2; }
+.sec { font-family: var(--display); font-size: 12px; letter-spacing: .24em; color: var(--muted); margin-bottom: -6px; }
+.slots { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 6px; }
+.slot { font-family: var(--display); font-weight: 600; letter-spacing: .06em; height: 40px; border-radius: 8px; border: 1px solid #4a443c; color: #c7beb2; }
+.slot.mine { background: var(--accent); color: #1a1206; border-color: var(--accent); }
+.slot.other { border-color: #6a4c1a; color: var(--accent); }
+.slot-who { font-size: 13px; color: var(--muted); min-height: 1.4em; }
+.how { color: #a99f92; font-size: 14px; line-height: 1.6; margin: 0; padding-left: 20px; }
+.how li { margin-bottom: 6px; }
+.how b { color: var(--fg); font-weight: 500; }
+.fine { color: #6d665c; font-size: 12.5px; line-height: 1.55; margin: 0; }
+
+.toast { position: fixed; left: 50%; bottom: calc(90px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); background: #2a2520; border: 1px solid #4a443c; padding: 8px 16px; border-radius: 999px; font-size: 14px; opacity: 0; transition: opacity .3s; pointer-events: none; z-index: 30; white-space: nowrap; }
+.toast.show { opacity: 1; }
+[hidden] { display: none !important; }
+.top-r { display: flex; align-items: center; gap: 12px; }
+.pill { font-family: var(--display); font-size: 13px; letter-spacing: .16em; border: 1px solid #3a352f; border-radius: 999px; padding: 6px 12px; color: #d8cfc2; }
+.pill.hot { background: var(--accent); color: #1a1206; border-color: var(--accent); font-weight: 700; }
+.sec b { color: var(--fg); }
+.shootbox { display: flex; flex-direction: column; gap: 10px; padding: 14px; border: 1px solid #4a3a1c; border-radius: 14px; background: #17130d; }
+.shootbox .sec { margin: 0; color: var(--accent); }
+.shootbox .load { flex: none; }
+.exp-seg { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+.exp-seg button { height: 38px; border-radius: 8px; border: 1px solid #4a443c; font-family: var(--display); font-size: 17px; font-weight: 600; color: #c7beb2; }
+.exp-seg button[aria-checked="true"] { border-color: var(--accent); color: var(--accent); }
+
+/* camera */
+.cam, .lab, .viewer { position: fixed; inset: 0; z-index: 200; background: #000; display: flex; flex-direction: column;
+  padding-top: env(safe-area-inset-top, 0px); padding-bottom: env(safe-area-inset-bottom, 0px); }
+.cam-top { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 8px max(14px, env(safe-area-inset-left, 0px)); }
+.icon-btn { width: 40px; height: 40px; border-radius: 50%; background: #1a1714; font-size: 18px; color: #d8cfc2; display: grid; place-items: center; }
+.cam-film { text-align: center; display: flex; flex-direction: column; font-family: var(--display); }
+.cam-film span { font-size: 11px; letter-spacing: .3em; color: var(--accent); text-transform: uppercase; }
+.cam-film b { font-size: 20px; font-weight: 600; }
+.vf { position: relative; flex: 1; min-height: 0; display: grid; place-items: center; overflow: hidden; background: #000; }
+.vf canvas { max-width: 100%; max-height: 100%; display: block; }
+.frame-lines { position: absolute; inset: 0; pointer-events: none; }
+.frame-lines::before, .frame-lines::after { content: ""; position: absolute; left: 50%; top: 50%; background: rgba(255,255,255,.35); }
+.frame-lines::before { width: 18px; height: 1px; margin-left: -9px; }
+.frame-lines::after { width: 1px; height: 18px; margin-top: -9px; }
+.vf-msg { position: absolute; inset: 0; display: grid; place-items: center; text-align: center; padding: 24px; color: #c7beb2; font-size: 15px; line-height: 1.6; background: radial-gradient(ellipse at center, #1c1915, #000); }
+.vf-msg b { color: var(--fg); }
+.blink { position: absolute; inset: 0; background: #000; opacity: 0; pointer-events: none; }
+.blink.go { animation: blink .32s ease-out; }
+@keyframes blink { 0% { opacity: 0; } 15% { opacity: 1; } 55% { opacity: 1; } 100% { opacity: 0; } }
+.cam-bot { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; padding: 16px max(18px, env(safe-area-inset-left, 0px)) 18px; }
+.rewind { justify-self: start; font-family: var(--display); font-size: 13px; letter-spacing: .16em; color: #c7beb2; line-height: 1.2; text-align: left; }
+.rewind small { font-family: var(--body); letter-spacing: 0; color: var(--muted); font-size: 11px; }
+.shoot { width: 78px; height: 78px; border-radius: 50%; border: 3px solid #d8cfc2; display: grid; place-items: center; }
+.shoot span { width: 62px; height: 62px; border-radius: 50%; background: linear-gradient(180deg, #f2f2f2, #a9a9a9); box-shadow: inset 0 -3px 6px rgba(0,0,0,.4); transition: transform .1s; }
+.shoot:active span { transform: scale(.9); }
+.shoot:disabled { opacity: .4; }
+.counter { justify-self: end; display: flex; align-items: baseline; gap: 4px; font-family: var(--display); color: var(--muted); }
+.counter span { font-size: 40px; font-weight: 700; color: var(--rec); text-shadow: 0 0 12px rgba(226,69,60,.55); font-variant-numeric: tabular-nums; letter-spacing: .04em; }
+.counter small { font-size: 12px; letter-spacing: .12em; }
+
+/* darkroom */
+.lab { background: var(--sheet); }
+.lab-in { max-width: 560px; width: 100%; margin: 0 auto; flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 10px 30px; display: flex; flex-direction: column; gap: 16px; }
+.lab-in > * { flex-shrink: 0; }
+.lab-in > .load { flex: none; }
+.roll { border: 1px solid var(--line); border-radius: 14px; padding: 14px; display: flex; flex-direction: column; gap: 12px; background: #0e0c0b; }
+.roll-h { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; }
+.roll-h .k { font-family: var(--display); font-size: 12px; letter-spacing: .24em; color: var(--accent); }
+.roll-h b { display: block; font-family: var(--display); font-size: 22px; font-weight: 600; margin-top: 2px; }
+.roll-h .n { font-family: var(--display); color: var(--muted); font-size: 14px; letter-spacing: .1em; white-space: nowrap; }
+.strip { height: 46px; border-radius: 4px; position: relative; overflow: hidden;
+  background: repeating-linear-gradient(90deg, transparent 0 7px, #0e0c0b 7px 13px) top 5px left 0 / 100% 6px no-repeat,
+  repeating-linear-gradient(90deg, transparent 0 7px, #0e0c0b 7px 13px) bottom 5px left 0 / 100% 6px no-repeat, linear-gradient(#3a2a20, #5b4232 50%, #3a2a20); }
+.strip i { position: absolute; top: 0; bottom: 0; left: 0; background: rgba(236,168,52,.35); width: 0; transition: width .25s linear; }
+.roll-a { display: flex; gap: 8px; flex-wrap: wrap; }
+.dev-line { font-family: var(--display); letter-spacing: .16em; font-size: 13px; color: var(--accent); }
+.sheet-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 4px; background: #1b1714; padding: 6px; border-radius: 6px; }
+.sheet-grid button { aspect-ratio: 3 / 4; overflow: hidden; border-radius: 2px; background: #000; position: relative; }
+.sheet-grid img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.sheet-grid button span { position: absolute; left: 3px; bottom: 2px; font-family: var(--display); font-size: 10px; color: #f0a640; text-shadow: 0 0 4px #000; }
+.empty { color: var(--muted); font-size: 14px; line-height: 1.6; padding: 20px 0; }
+
+/* import editor */
+.load.ghost { background: none; border: 1px solid var(--accent); color: var(--accent); font-size: 15px; letter-spacing: .06em; height: 46px; font-weight: 600; }
+.edit { position: fixed; inset: 0; z-index: 200; background: #000; display: flex; flex-direction: column; padding-top: env(safe-area-inset-top, 0px); padding-bottom: env(safe-area-inset-bottom, 0px); }
+.ed-hint { position: absolute; left: 50%; bottom: 10px; transform: translateX(-50%); font-size: 12px; color: rgba(255,255,255,.7); background: rgba(0,0,0,.45); padding: 4px 10px; border-radius: 999px; pointer-events: none; transition: opacity .4s; white-space: nowrap; }
+.ed-hint.orig { color: #1a1206; background: var(--accent); }
+.ed-films { display: flex; gap: 8px; overflow-x: auto; padding: 12px max(14px, env(safe-area-inset-left, 0px)) 6px; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
+.ed-films::-webkit-scrollbar, .ed-thumbs::-webkit-scrollbar { display: none; }
+.fchip { flex: none; display: flex; flex-direction: column; align-items: center; gap: 4px; width: 62px; }
+.fchip i { width: 30px; height: 40px; border-radius: 3px; position: relative; overflow: hidden; box-shadow: inset 0 0 0 1px rgba(255,255,255,.08); }
+.fchip i::before { content: ""; position: absolute; left: 0; right: 0; top: 7px; height: 7px; background: var(--b); }
+.fchip i::after { content: ""; position: absolute; inset: 0; background: linear-gradient(90deg, rgba(0,0,0,.4), rgba(255,255,255,.18) 30%, rgba(0,0,0,.35)); }
+.fchip span { font-family: var(--display); font-size: 11px; letter-spacing: .04em; color: var(--muted); text-align: center; line-height: 1.1; max-width: 62px; }
+.fchip[aria-pressed="true"] span { color: var(--accent); }
+.fchip[aria-pressed="true"] i { outline: 2px solid var(--accent); outline-offset: 2px; }
+.ed-thumbs { display: flex; gap: 6px; overflow-x: auto; padding: 6px max(14px, env(safe-area-inset-left, 0px)); scrollbar-width: none; }
+.ed-thumbs button { flex: none; width: 44px; height: 44px; border-radius: 6px; overflow: hidden; opacity: .55; }
+.ed-thumbs button[aria-pressed="true"] { opacity: 1; outline: 2px solid var(--fg); outline-offset: 1px; }
+.ed-thumbs img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.ed-bar { display: flex; gap: 10px; align-items: center; padding: 10px max(14px, env(safe-area-inset-left, 0px)) 14px; }
+.ed-bar .pill { height: 52px; padding: 0 16px; }
+.ed-bar .load { flex: 1; }
+.ed-bar button:disabled { opacity: .5; }
+
+/* viewer */
+.viewer { background: #000; }
+.viewer img { flex: 1; min-height: 0; object-fit: contain; width: 100%; -webkit-touch-callout: default; -webkit-user-select: auto; user-select: auto; }
+.vbar { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 12px max(16px, env(safe-area-inset-left, 0px)); font-family: var(--display); letter-spacing: .14em; color: var(--muted); font-size: 13px; }
+@media (prefers-reduced-motion: reduce) { .can, .leader, .sheet { transition: none !important; } }
+@media (max-height: 680px) { .stage { min-height: 200px; } .title { font-size: 32px; } .desc { font-size: 14px; } }
+</style>
+
+</head>
+<body>
+<div class="app">
+  <div class="top">
+    <div class="brand"><span class="hex"></span><b>M·FILM</b><span class="sep"></span><span>X-T1</span></div>
+    <div class="top-r">
+      <button class="pill" id="printsBtn">PRINTS</button>
+      <button class="roll-badge" id="camBadge" aria-label="เปิดกล้องม้วนปัจจุบัน"><span class="rec" id="recDot" hidden></span>ROLL <b id="rollTop">012</b></button>
+    </div>
+  </div>
+  <div class="tabs" role="tablist" id="tabs"></div>
+  <div class="stage" id="stage" aria-label="ชั้นวางฟิล์ม"><div class="floor"></div></div>
+  <div class="dots" id="dots"></div>
+  <div class="card">
+    <div class="maker" id="maker"></div>
+    <div class="title" id="name"></div>
+    <div class="desc" id="desc"></div>
+    <div class="chips">
+      <div class="chip">ISO <b id="iso"></b></div>
+      <div class="chip">PROCESS <b id="proc"></b></div>
+      <div class="chip hot">BASE <b id="base"></b></div>
+    </div>
+  </div>
+  <div class="bar">
+    <button class="nav" id="prev" aria-label="ม้วนก่อนหน้า">◀</button>
+    <button class="load" id="loadBtn">LOAD</button>
+    <button class="nav" id="next" aria-label="ม้วนถัดไป">▶</button>
+  </div>
+</div>
+
+<section class="sheet" id="sheet" aria-hidden="true">
+  <div class="sheet-in">
+    <button class="back" id="back">◀ ชั้นฟิล์ม</button>
+    <div class="rh">
+      <div class="k" id="rollNo">ROLL 012</div>
+      <h2 id="rollName"></h2>
+    </div>
+    <div class="shootbox">
+      <div class="sec">ถ่ายด้วย iPhone</div>
+      <div class="exp-seg" id="expSeg" role="radiogroup" aria-label="จำนวนรูปต่อม้วน">
+        <button data-n="12">12</button><button data-n="24">24</button><button data-n="36">36</button>
+      </div>
+      <button class="load" id="shootRoll">ถ่ายม้วนนี้</button>
+      <button class="load ghost" id="importRoll">เอารูปในเครื่องมาล้างด้วยฟิล์มนี้</button>
+      <p class="fine">ถ่ายแล้วไม่เห็นรูปจนกว่าจะล้างฟิล์ม เหมือนกล้องฟิล์มจริง</p>
+    </div>
+    <div class="sec">หรือตั้งใน X-T1 · กด <b>Q</b> แล้วตั้งตามนี้</div>
+    <div class="qmenu" id="qmenu"></div>
+    <div class="sec">เก็บไว้ช่องไหน</div>
+    <div class="slots" id="slots"></div>
+    <div class="slot-who" id="slotWho"></div>
+    <div class="sec">วิธีตั้งในกล้อง</div>
+    <ol class="how">
+      <li><b>WB Shift:</b> เลือกช่อง WB ใน Q → เลือกโหมด → กด <b>MENU/OK</b> → ซ้าย/ขวา = R, ขึ้น/ลง = B</li>
+      <li><b>เก็บถาวร:</b> MENU → EDIT/SAVE CUSTOM SETTING → เลือก C1–C7 → SAVE CURRENT SETTINGS</li>
+      <li><b>เปลี่ยนม้วนตอนถ่าย:</b> กด Q → ช่องมุมซ้ายบน (BASIC/C1–C7) → หมุนแป้นเลือก</li>
+      <li><b>Exp. Comp.:</b> ตั้งที่แป้นชดเชยแสงบนตัวกล้อง</li>
+    </ol>
+    <p class="fine">สูตรเป็นค่าประมาณจากโทนของฟิล์มแต่ละม้วน X-T1 ไม่มี Grain Effect เกรนได้จาก ISO สูงกับ NR −2 DR200 ต้องใช้ ISO 400 ขึ้นไป DR400 ต้อง ISO 800 ขึ้นไป Classic Chrome ต้องใช้ firmware 4.00 ขึ้นไป ลองถ่ายแล้วปรับ WB Shift ตามแสงจริง</p>
+  </div>
+</section>
+
+<section class="cam" id="cam" hidden>
+  <div class="cam-top">
+    <button class="icon-btn" id="camClose" aria-label="ปิดกล้อง">✕</button>
+    <div class="cam-film"><span id="camMaker"></span><b id="camFilm"></b></div>
+    <button class="icon-btn" id="camFlip" aria-label="สลับกล้องหน้า/หลัง">⟲</button>
+  </div>
+  <div class="vf" id="vfBox">
+    <canvas id="vf"></canvas>
+    <div class="vf-msg" id="vfMsg" hidden></div>
+    <div class="frame-lines"></div>
+    <div class="blink" id="blink"></div>
+  </div>
+  <div class="cam-bot">
+    <button class="rewind" id="rewind">REWIND<br><small>ล้างฟิล์ม</small></button>
+    <button class="shoot" id="shoot" aria-label="ถ่าย"><span></span></button>
+    <div class="counter"><small>EXP</small><span id="count">01</span><small id="countOf">/24</small></div>
+  </div>
+  <input type="file" accept="image/*" capture="environment" id="fileCap" hidden>
+</section>
+
+<section class="lab" id="lab" hidden>
+  <div class="lab-in">
+    <button class="back" id="labBack">◀ ชั้นฟิล์ม</button>
+    <div class="rh"><div class="k">DARKROOM</div><h2>Prints</h2><p id="labNote">ม้วนที่ถ่ายด้วย iPhone อยู่ที่นี่ ล้างแล้วถึงจะเห็นรูป</p></div>
+    <button class="load ghost" id="labImport">เอารูปในเครื่องมาล้าง</button>
+    <div id="rolls"></div>
+  </div>
+</section>
+
+<div class="viewer" id="viewer" hidden>
+  <img id="vImg" alt="">
+  <div class="vbar">
+    <button class="pill" id="vClose">ปิด</button>
+    <span id="vInfo"></span>
+    <button class="pill hot" id="vSave">บันทึก</button>
+  </div>
+</div>
+<section class="edit" id="edit" hidden>
+  <div class="cam-top">
+    <button class="icon-btn" id="edClose" aria-label="ปิด">✕</button>
+    <div class="cam-film"><span id="edMaker"></span><b id="edFilm"></b></div>
+    <button class="icon-btn" id="edAdd" aria-label="เพิ่มรูป">＋</button>
+  </div>
+  <div class="vf" id="edBox"><canvas id="edCv"></canvas><div class="ed-hint" id="edHint">กดค้างที่รูปเพื่อดูรูปเดิม</div></div>
+  <div class="ed-films" id="edFilms"></div>
+  <div class="ed-thumbs" id="edThumbs"></div>
+  <div class="ed-bar">
+    <button class="pill" id="edSaveOne">บันทึกรูปนี้</button>
+    <button class="load" id="edSaveAll">บันทึกทั้งหมด</button>
+  </div>
+</section>
+<input type="file" accept="image/*" multiple id="filePick" hidden>
+<div class="toast" id="toast"></div>
+
+<script>
+const S = { P:"PROVIA/STD", V:"Velvia/VIVID", A:"ASTIA/SOFT", CC:"CLASSIC CHROME", NH:"PRO Neg. Hi", NS:"PRO Neg. Std",
+  M:"MONOCHROME", MY:"MONO+Ye", MR:"MONO+R", MG:"MONO+G" };
+const SHELVES = [["colour","COLOUR"],["slide","SLIDE"],["bw","B&W"],["cine","CINE"]];
+// r: [sim, DR, highlight, shadow, color(null=B&W), sharp, NR, WB, R, B, EV, camISO]
+const F = [
+ {g:"colour",mk:"Kodak",nm:"Portra 400",cn:"Portra",iso:400,p:"C-41",d:"ผิวอุ่นนุ่ม ไฮไลต์ละมุน",c:["#e8e6e0","#e79a22","#1b1b1b"],r:["NH",200,-1,-1,1,-1,-2,"AUTO",2,-3,"+1/3",400]},
+ {g:"colour",mk:"Kodak",nm:"Ektar 100",cn:"Ektar",iso:100,p:"C-41",d:"สีจัด เกรนละเอียดมาก",c:["#b8262c","#f2c400","#f6e7c8"],r:["V",100,0,1,1,0,-2,"AUTO",1,-2,"0",200]},
+ {g:"colour",mk:"Kodak",nm:"Gold 200",cn:"Gold",iso:200,p:"C-41",d:"แดดเย็นทั้งวัน โทนทอง",c:["#f0b21a","#c3262c","#3a2208"],r:["CC",200,0,1,2,-1,-2,"DAYLIGHT",3,-5,"+1/3",400]},
+ {g:"colour",mk:"Kodak",nm:"ColorPlus 200",cn:"ColorPlus",iso:200,p:"C-41",d:"ฟิล์มบ้านๆ อุ่น คอนทราสต์ต่ำ",c:["#2a5fb0","#f2c400","#f8f4e8"],r:["CC",200,-1,0,1,-1,-2,"DAYLIGHT",4,-4,"+1/3",400]},
+ {g:"colour",mk:"Fujicolor",nm:"Superia 400",cn:"Superia",iso:400,p:"C-41",d:"เงาอมเขียว ถ่ายเล่นทุกวัน",c:["#1f8f4c","#d8232a","#f4f4ee"],r:["CC",200,1,1,1,0,-2,"AUTO",-2,-1,"0",800]},
+ {g:"colour",mk:"Fujicolor",nm:"C200",cn:"C200",iso:200,p:"C-41",d:"เย็นใส ฟ้าสวย เขียวสด",c:["#16a05a","#fafafa","#0d2d1a"],r:["NS",200,0,0,1,0,-2,"DAYLIGHT",-1,1,"+1/3",400]},
+ {g:"colour",mk:"Fujifilm",nm:"Pro 400H",cn:"Pro 400H",iso:400,p:"C-41",d:"พาสเทลโปร่ง เขียวอมฟ้า",c:["#dfe6e2","#2f8a6a","#1c2a24"],r:["NS",200,-1,-2,0,-1,-2,"AUTO",-1,1,"+2/3",400]},
+ {g:"colour",mk:"Fujicolor",nm:"Superia 1600",cn:"1600",iso:1600,p:"C-41",d:"ถ่ายกลางคืน เกรนหนัก",c:["#3b2f86","#e23a32","#f2efe6"],r:["NH",400,0,1,0,-1,-2,"AUTO",1,-1,"0",3200]},
+ {g:"colour",mk:"Agfa",nm:"Vista 200",cn:"Vista",iso:200,p:"C-41",d:"แดงอุ่น สีวันหยุด",c:["#d42a2a","#fbd200","#fff6e6"],r:["CC",200,0,1,2,0,-2,"DAYLIGHT",3,-3,"0",400]},
+ {g:"colour",mk:"Lomography",nm:"Redscale 100",cn:"Redscale",iso:100,p:"C-41",d:"ถ่ายกลับด้าน แดงส้มทั้งภาพ",c:["#8e1c12","#f07a1a","#fde4c7"],r:["V",200,1,1,2,0,-2,"INCANDESCENT",9,-9,"+1",400]},
+ {g:"slide",mk:"Fujichrome",nm:"Velvia 50",cn:"Velvia",iso:50,p:"E-6",d:"สไลด์สีจัด คอนทราสต์แข็ง",c:["#1d1d1f","#16a05a","#f1f1f1"],r:["V",100,1,1,2,1,-2,"DAYLIGHT",0,0,"-1/3",200]},
+ {g:"slide",mk:"Fujifilm",nm:"Provia 100F",cn:"Provia",iso:100,p:"E-6",d:"สไลด์กลางๆ สีตรง",c:["#1d1d1f","#2a6fd0","#f1f1f1"],r:["P",100,0,0,0,0,-1,"DAYLIGHT",0,0,"0",200]},
+ {g:"slide",mk:"Fujifilm",nm:"Astia 100F",cn:"Astia",iso:100,p:"E-6",d:"สไลด์นุ่ม สำหรับผิวคน",c:["#1d1d1f","#d76fa0","#f1f1f1"],r:["A",200,-1,-1,0,-1,-1,"AUTO",1,-1,"0",400]},
+ {g:"slide",mk:"Kodak",nm:"Kodachrome 64",cn:"Kodachrome",iso:64,p:"K-14",d:"สีนิตยสารยุค 70 แดงลึก",c:["#f2c400","#c3262c","#1b1b1b"],r:["CC",200,0,1,2,1,-2,"DAYLIGHT",2,-4,"-1/3",400]},
+ {g:"slide",mk:"Kodak",nm:"E100VS",cn:"E100VS",iso:100,p:"E-6",d:"Ektachrome สีจัดมาก",c:["#151515","#e2453c","#f5f0e6"],r:["V",100,0,1,2,0,-2,"AUTO",1,-1,"0",200]},
+ {g:"slide",mk:"Kodak",nm:"E100GX",cn:"E100GX",iso:100,p:"E-6",d:"Ektachrome อุ่นนุ่ม",c:["#151515","#e79a22","#f5f0e6"],r:["P",200,0,0,1,0,-2,"DAYLIGHT",2,-2,"0",400]},
+ {g:"slide",mk:"Lomography",nm:"X-Pro Slide 200",cn:"X-Pro",iso:200,p:"X-PRO",d:"ล้างข้ามน้ำยา ฟ้ากับเหลือง",c:["#3c1f66","#1fc4c4","#f6ef6a"],r:["V",100,2,2,2,1,-2,"AUTO",-3,-6,"+1/3",200]},
+ {g:"bw",mk:"Kodak",nm:"Tri-X 400",cn:"Tri-X",iso:400,p:"B&W",d:"คอนทราสต์ดิบ สายสตรีท",c:["#f2c400","#1b1b1b","#1b1b1b"],r:["MY",200,1,2,null,1,-2,"AUTO",0,0,"0",1600]},
+ {g:"bw",mk:"Ilford",nm:"HP5 Plus 400",cn:"HP5",iso:400,p:"B&W",d:"ขาวดำคลาสสิก ให้อภัยง่าย",c:["#f4f4f2","#1b1b1b","#1b1b1b"],r:["M",200,0,1,null,0,-2,"AUTO",0,0,"0",1600]},
+ {g:"bw",mk:"Fujifilm",nm:"Acros 100",cn:"Acros",iso:100,p:"B&W",d:"เกรนละเอียด ดำลึก",c:["#2b2b2d","#16a05a","#f1f1f1"],r:["MG",100,1,1,null,1,-1,"AUTO",0,0,"0",200]},
+ {g:"bw",mk:"Kodak",nm:"T-MAX 100",cn:"T-MAX",iso:100,p:"B&W",d:"โทนเนียน เกรนแทบไม่มี",c:["#f2c400","#1b1b1b","#1b1b1b"],r:["M",100,0,0,null,1,0,"AUTO",0,0,"0",200]},
+ {g:"bw",mk:"Ilford",nm:"Delta 3200",cn:"Delta",iso:3200,p:"B&W",d:"ดันเข้าไปในความมืด",c:["#141414","#e79a22","#f4f4f2"],r:["MY",400,1,2,null,-1,-2,"AUTO",0,0,"0",6400]},
+ {g:"bw",mk:"Rollei",nm:"Retro 80S",cn:"Retro",iso:80,p:"B&W",d:"ไวแดง ฟ้ามืดเข้ม",c:["#8a1a1a","#1b1b1b","#f4f0e8"],r:["MR",100,1,1,null,1,-1,"AUTO",0,0,"-1/3",200]},
+ {g:"bw",mk:"Rollei",nm:"Ortho 25",cn:"Ortho",iso:25,p:"B&W",d:"ออร์โธ สีแดงกลายเป็นดำ",c:["#d9d4c7","#3a6b9c","#1b1b1b"],r:["MG",100,1,1,null,1,-1,"AUTO",0,0,"0",200]},
+ {g:"cine",mk:"CineStill",nm:"800T",cn:"800T",iso:800,p:"C-41",d:"ฟิล์มหนังทังสเตน กลางคืนเป็นฟ้า",c:["#121212","#d8232a","#f2efe6"],r:["CC",400,-1,1,1,-1,-2,"INCANDESCENT",2,-1,"0",1600]},
+ {g:"cine",mk:"Kodak",nm:"Vision 2383",cn:"2383",iso:200,p:"ECP",d:"ฟิล์มพิมพ์โรงหนัง เงาอมเขียวน้ำเงิน",c:["#1b1b1b","#e79a22","#e79a22"],r:["CC",400,-1,1,1,-1,-2,"AUTO",1,-2,"-1/3",800]},
+ {g:"cine",mk:"Fujifilm",nm:"Eterna 3510",cn:"Eterna",iso:200,p:"ECP",d:"ฟิล์มพิมพ์ฟูจิ สีนุ่มจาง",c:["#1b1b1b","#2f8a6a","#cfe3da"],r:["CC",400,-2,-2,-2,-2,-2,"AUTO",0,1,"0",800]},
+];
+
+const $ = id => document.getElementById(id);
+const store = {
+  get(k, d) { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : d; } catch { return d; } },
+  set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} }
+};
+let slots = store.get("xt1-slots", {});
+let rollCount = store.get("xt1-roll", 12);
+let group = "colour", idx = 0;
+const memo = {};
+const list = () => F.filter(f => f.g === group);
+const sig = n => n > 0 ? "+" + n : String(n);
+const pad = n => String(n).padStart(3, "0");
+const buzz = () => { try { navigator.vibrate && navigator.vibrate(8); } catch {} };
+
+SHELVES.forEach(([g, lab]) => {
+  const b = document.createElement("button");
+  b.className = "tab"; b.textContent = lab; b.setAttribute("role", "tab"); b.dataset.g = g;
+  b.onclick = () => setGroup(g);
+  $("tabs").append(b);
+});
+
+function canHTML(f) {
+  const [lab, band, ink] = f.c;
+  return `<div class="cap top"></div>
+    <div class="body" style="background:${lab};color:${ink}">
+      <div class="band" style="top:16px;background:${band}"></div>
+      <div class="band" style="bottom:12px;height:9px;background:${band}"></div>
+      <div class="mk" style="margin-top:20px">${f.mk}</div>
+      <div class="nm">${f.cn}</div>
+      <div class="iso">${f.iso}</div>
+      <div class="fmt">135-36</div>
+    </div>
+    <div class="cap"></div><div class="shadow"></div>`;
+}
+
+function build() {
+  const st = $("stage");
+  st.querySelectorAll(".can,.leader").forEach(n => n.remove());
+  const leader = document.createElement("div"); leader.className = "leader"; st.append(leader);
+  list().forEach((f, i) => {
+    const c = document.createElement("div");
+    c.className = "can"; c.innerHTML = canHTML(f);
+    c.onclick = () => { if (moved) return; if (i === idx) load(); else { idx = i; layout(); buzz(); } };
+    st.append(c);
+  });
+  $("dots").innerHTML = list().map(() => `<span class="dot"></span>`).join("");
+  document.querySelectorAll(".tab").forEach(t => t.setAttribute("aria-selected", t.dataset.g === group));
+  layout(true);
+}
+
+function layout(drop) {
+  const st = $("stage"), w = st.clientWidth, h = st.clientHeight;
+  const base = Math.max(0.78, Math.min(1.15, (h - 60) / 200));
+  const gap = Math.min(150, w * 0.29);
+  document.querySelectorAll(".can").forEach((c, i) => {
+    const d = i - idx, a = Math.abs(d);
+    const s = base * Math.max(0.45, 1 - a * 0.24);
+    const x = Math.sign(d) * (a === 0 ? 0 : gap * 0.82 + (a - 1) * gap * 0.62);
+    const y = a === 0 ? -6 : a * 6;
+    c.style.zIndex = 50 - a;
+    c.style.opacity = a > 3 ? 0 : 1;
+    c.style.filter = `brightness(${1 - Math.min(a, 3) * 0.2})`;
+    if (drop) { c.style.transition = "none"; c.style.transform = `translate(${x}px,-320px) scale(${s})`; c.offsetWidth; c.style.transition = ""; c.style.transitionDelay = (a * 50) + "ms"; }
+    else c.style.transitionDelay = "0ms";
+    requestAnimationFrame(() => { c.style.transform = `translate(${x}px,${y}px) scale(${s})`; });
+  });
+  st.classList.remove("loaded");
+  document.querySelectorAll(".dot").forEach((d, i) => d.classList.toggle("on", i === idx));
+  const f = list()[idx];
+  $("maker").textContent = f.mk; $("name").textContent = f.nm; $("desc").textContent = f.d;
+  $("iso").textContent = f.iso; $("proc").textContent = f.p; $("base").textContent = S[f.r[0]].split("/")[0];
+  $("prev").disabled = idx === 0; $("next").disabled = idx === list().length - 1;
+  $("prev").style.opacity = idx === 0 ? .35 : 1; $("next").style.opacity = idx === list().length - 1 ? .35 : 1;
+}
+
+function recipe(f) {
+  const [sim, dr, hi, sh, col, sharp, nr, wb, R, B, ev, cam] = f.r;
+  const cells = [
+    ["Film Simulation", S[sim], "wide"], ["Dynamic Range", "DR" + dr], ["ISO", cam],
+    ["Highlight Tone", sig(hi)], ["Shadow Tone", sig(sh)], ["Color", col === null ? "—" : sig(col)], ["Sharpness", sig(sharp)],
+    ["Noise Reduction", sig(nr)], ["White Balance", wb], ["WB Shift", `R${sig(R)} B${sig(B)}`], ["Exp. Comp.", ev + " EV"],
+  ];
+  $("qmenu").innerHTML = cells.map(([l, v, cls]) =>
+    `<div class="cell ${cls || ""}"><span class="l">${l}</span><span class="v ${v === "—" ? "dim" : ""}">${v}</span></div>`).join("");
+  $("rollName").textContent = `${f.mk} ${f.nm}`;
+  drawSlots(f);
+}
+
+function drawSlots(f) {
+  const key = f.mk + " " + f.nm;
+  const sl = $("slots"); sl.innerHTML = "";
+  for (let n = 1; n <= 7; n++) {
+    const b = document.createElement("button");
+    const who = slots["C" + n];
+    b.className = "slot" + (who === key ? " mine" : who ? " other" : "");
+    b.textContent = "C" + n;
+    b.setAttribute("aria-pressed", who === key);
+    b.onclick = () => {
+      buzz();
+      if (slots["C" + n] === key) { delete slots["C" + n]; toast(`ล้าง C${n}`); }
+      else { slots["C" + n] = key; toast(`C${n} = ${f.nm}`); }
+      store.set("xt1-slots", slots); drawSlots(f);
+    };
+    sl.append(b);
+  }
+  const used = Object.keys(slots).sort().map(k => `${k} ${slots[k].replace(/^\S+ /, "")}`);
+  $("slotWho").textContent = used.length ? used.join(" · ") : "ยังไม่ได้จดช่องไหน แตะ C1–C7 หลังเซฟในกล้องแล้ว";
+}
+
+function load() {
+  buzz();
+  rollCount++; store.set("xt1-roll", rollCount);
+  $("rollTop").textContent = pad(rollCount);
+  $("rollNo").innerHTML = `<span class="rec"></span>ROLL ${pad(rollCount)} · LOADED`;
+  store.set("xt1-last", { group, idx });
+  recipe(list()[idx]);
+  $("stage").classList.add("loaded");
+  setTimeout(() => { $("sheet").classList.add("open"); $("sheet").setAttribute("aria-hidden", "false"); $("sheet").querySelector(".sheet-in").scrollTop = 0; }, 850);
+}
+function closeSheet() { $("sheet").classList.remove("open"); $("sheet").setAttribute("aria-hidden", "true"); $("stage").classList.remove("loaded"); }
+
+function setGroup(g) { if (g === group) return; buzz(); memo[group] = idx; group = g; idx = memo[g] || 0; build(); }
+function step(d) { const n = list().length, j = Math.max(0, Math.min(n - 1, idx + d)); if (j !== idx) { idx = j; layout(); buzz(); } }
+function shelf(d) { const i = SHELVES.findIndex(s => s[0] === group); setGroup(SHELVES[(i + d + SHELVES.length) % SHELVES.length][0]); }
+
+let tt;
+function toast(t) { const el = $("toast"); el.textContent = t; el.classList.add("show"); clearTimeout(tt); tt = setTimeout(() => el.classList.remove("show"), 1600); }
+
+// swipe on the stage: left/right = film, up/down = shelf
+let sx = null, sy = null, moved = false;
+const st = $("stage");
+st.addEventListener("touchstart", e => { sx = e.touches[0].clientX; sy = e.touches[0].clientY; moved = false; }, { passive: true });
+st.addEventListener("touchend", e => {
+  if (sx === null) return;
+  const dx = e.changedTouches[0].clientX - sx, dy = e.changedTouches[0].clientY - sy;
+  if (Math.abs(dx) > 30 && Math.abs(dx) > Math.abs(dy)) { moved = true; step(dx < 0 ? 1 : -1); }
+  else if (Math.abs(dy) > 40) { moved = true; shelf(dy < 0 ? 1 : -1); }
+  sx = null; setTimeout(() => moved = false, 50);
+});
+st.addEventListener("pointerdown", e => { if (e.pointerType === "mouse") { sx = e.clientX; sy = e.clientY; moved = false; } });
+st.addEventListener("pointerup", e => { if (e.pointerType === "mouse" && sx !== null) { const dx = e.clientX - sx; if (Math.abs(dx) > 30) { moved = true; step(dx < 0 ? 1 : -1); } sx = null; setTimeout(() => moved = false, 50); } });
+
+document.addEventListener("keydown", e => {
+  if (!$("cam").hidden) { if (e.key === " " || e.key === "Enter") { e.preventDefault(); shoot(); } return; }
+  if (!$("lab").hidden || !$("viewer").hidden || !$("edit").hidden) return;
+  if ($("sheet").classList.contains("open")) { if (e.key === "Escape" || e.key === "Backspace") closeSheet(); return; }
+  if (e.key === "ArrowLeft") step(-1); else if (e.key === "ArrowRight") step(1);
+  else if (e.key === "ArrowUp") { e.preventDefault(); shelf(-1); } else if (e.key === "ArrowDown") { e.preventDefault(); shelf(1); }
+  else if (e.key === "Enter") load();
+});
+$("prev").onclick = () => step(-1);
+$("next").onclick = () => step(1);
+$("loadBtn").onclick = load;
+$("back").onclick = closeSheet;
+addEventListener("resize", () => layout());
+
+/* ---------------------------------------------------------------- iPhone camera */
+
+// look: [exposure, contrast, saturation, warmth, tint(+magenta), fade, grain, vignette, halation, shadowRGB, highlightRGB, mono]
+const MW = { M: [.30,.59,.11], Ye: [.42,.48,.10], R: [.62,.33,.05], G: [.20,.68,.12], O: [0,.6,.4] };
+const LOOK = {
+ "Portra 400":   [.10,.05,.90,.35,.05,.04,.05,.20,.10,[0,.02,.04],[.06,.03,0]],
+ "Ektar 100":    [0,.25,1.35,.15,0,0,.02,.20,.05,[0,0,.04],[.04,.01,-.02]],
+ "Gold 200":     [.10,.15,1.15,.60,.05,.03,.06,.25,.10,[.02,.01,-.02],[.08,.05,-.04]],
+ "ColorPlus 200":[.10,0,1.0,.50,0,.06,.07,.25,.10,[.02,0,0],[.06,.04,-.03]],
+ "Superia 400":  [0,.12,1.05,-.05,-.15,.03,.07,.20,.05,[-.02,.04,.02],[.03,.03,0]],
+ "C200":         [.05,.08,1.05,-.15,-.10,.03,.06,.20,.05,[-.02,.03,.04],[.02,.03,0]],
+ "Pro 400H":     [.20,-.10,.85,-.10,-.08,.06,.05,.15,.05,[-.01,.03,.04],[.03,.04,.03]],
+ "Superia 1600": [0,.15,1.0,.05,-.10,.05,.18,.30,.10,[-.02,.03,.03],[.04,.02,0]],
+ "Vista 200":    [.05,.15,1.2,.40,.08,.03,.07,.25,.10,[.03,0,.02],[.07,.03,-.02]],
+ "Redscale 100": [.20,.20,.60,1.5,.30,.05,.10,.35,.15,[.15,.02,-.08],[.20,.10,-.10]],
+ "Velvia 50":    [-.10,.35,1.5,.05,.05,0,.02,.25,0,[0,0,.05],[.02,0,0]],
+ "Provia 100F":  [0,.15,1.1,0,0,0,.03,.15,0,[0,0,.02],[0,0,0]],
+ "Astia 100F":   [.05,0,.95,.10,.05,.02,.03,.15,0,[0,0,.02],[.03,.02,.01]],
+ "Kodachrome 64":[-.05,.30,1.25,.25,.05,0,.04,.25,0,[.02,0,.04],[.05,.03,-.03]],
+ "E100VS":       [0,.30,1.45,.10,0,0,.03,.20,0,[0,0,.04],[.02,0,0]],
+ "E100GX":       [0,.18,1.1,.30,.03,.02,.03,.20,0,[0,0,.02],[.04,.02,0]],
+ "X-Pro Slide 200":[.10,.40,1.3,-.10,-.25,.03,.08,.35,.05,[-.04,.02,.10],[.10,.10,-.12]],
+ "Tri-X 400":    [0,.35,0,0,0,.02,.16,.30,0,[0,0,0],[0,0,0],"Ye"],
+ "HP5 Plus 400": [.05,.15,0,0,0,.03,.14,.25,0,[0,0,0],[0,0,0],"M"],
+ "Acros 100":    [0,.25,0,0,0,0,.05,.20,0,[0,0,0],[0,0,0],"G"],
+ "T-MAX 100":    [0,.10,0,0,0,.02,.03,.15,0,[0,0,0],[0,0,0],"M"],
+ "Delta 3200":   [.10,.30,0,0,0,.04,.28,.35,0,[0,0,0],[0,0,0],"Ye"],
+ "Retro 80S":    [-.05,.30,0,0,0,.01,.06,.25,0,[0,0,0],[0,0,0],"R"],
+ "Ortho 25":     [0,.25,0,0,0,.02,.04,.20,0,[0,0,0],[0,0,0],"O"],
+ "800T":         [.05,.10,1.0,-.60,.05,.04,.10,.25,.50,[-.03,.02,.06],[.05,.02,0]],
+ "Vision 2383":  [0,.25,1.05,.10,0,.02,.04,.30,.10,[-.05,.03,.06],[.07,.03,-.04]],
+ "Eterna 3510":  [.10,-.15,.70,0,-.05,.06,.04,.20,.05,[-.02,.02,.03],[.02,.02,0]],
+};
+const lookOf = f => LOOK[f.nm] || LOOK["Provia 100F"];
+
+const VS = `attribute vec2 p; varying vec2 uv; void main(){ uv = vec2(p.x*.5+.5, .5-p.y*.5); gl_Position = vec4(p,0.,1.); }`;
+const FS = `precision highp float;
+varying vec2 uv; uniform sampler2D t; uniform vec2 res;
+uniform float ex, con, sat, temp, tint, fade, grain, vig, hal, seed, mono;
+uniform vec3 sh, hi, mw;
+float hash(vec2 p){ p = fract(p*vec2(123.34,456.21)); p += dot(p, p+45.32); return fract(p.x*p.y); }
+void main(){
+  vec3 c = texture2D(t, uv).rgb;
+  vec3 g = vec3(0.);
+  for (int i = 0; i < 8; i++) {
+    float a = float(i)*0.785398;
+    vec2 o = vec2(cos(a), sin(a)*res.x/res.y) * 0.007;
+    vec3 s = texture2D(t, uv+o).rgb;
+    g += s * smoothstep(.72, 1., dot(s, vec3(.299,.587,.114)));
+  }
+  g /= 8.;
+  c = pow(c, vec3(2.2)) * exp2(ex);
+  c *= vec3(1.+temp*.12, 1.-tint*.08, 1.-temp*.12);
+  c = pow(max(c, 0.), vec3(1./2.2));
+  float l = dot(c, vec3(.299,.587,.114));
+  if (mono > .5) c = vec3(dot(c, mw)); else c = mix(vec3(l), c, sat);
+  c = clamp(c, 0., 1.);
+  vec3 sc = c*c*(3.-2.*c);
+  if (con >= 0.) c = mix(c, sc, clamp(con*1.6, 0., 1.));
+  else c = mix(c, vec3(.5)+(c-.5)*.6, clamp(-con*1.6, 0., 1.));
+  l = dot(c, vec3(.299,.587,.114));
+  c += sh*(1.-smoothstep(0., .55, l)) + hi*smoothstep(.45, 1., l);
+  c += g*hal*vec3(1., .35, .15);
+  c = mix(vec3(fade), vec3(1.-fade*.4), clamp(c, 0., 1.));
+  vec2 d = uv-.5; c *= 1. - vig*dot(d,d)*1.8;
+  float n = hash(floor(uv*res/max(1., max(res.x,res.y)/1800.)) + seed) - .5;
+  c += n * grain * .75 * (.35 + .65*(1.-abs(l-.5)*2.));
+  gl_FragColor = vec4(clamp(c, 0., 1.), 1.);
+}`;
+
+function makeRenderer(canvas) {
+  const gl = canvas.getContext("webgl", { preserveDrawingBuffer: true, premultipliedAlpha: false });
+  if (!gl) return null;
+  const sh = (type, src) => { const s = gl.createShader(type); gl.shaderSource(s, src); gl.compileShader(s); return s; };
+  const pr = gl.createProgram();
+  gl.attachShader(pr, sh(gl.VERTEX_SHADER, VS)); gl.attachShader(pr, sh(gl.FRAGMENT_SHADER, FS)); gl.linkProgram(pr);
+  if (!gl.getProgramParameter(pr, gl.LINK_STATUS)) return null;
+  gl.useProgram(pr);
+  const buf = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, buf);
+  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1,-1, 1,-1, -1,1, 1,1]), gl.STATIC_DRAW);
+  const loc = gl.getAttribLocation(pr, "p"); gl.enableVertexAttribArray(loc); gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0);
+  const tex = gl.createTexture(); gl.bindTexture(gl.TEXTURE_2D, tex);
+  [gl.TEXTURE_WRAP_S, gl.TEXTURE_WRAP_T].forEach(k => gl.texParameteri(gl.TEXTURE_2D, k, gl.CLAMP_TO_EDGE));
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+  const U = n => gl.getUniformLocation(pr, n);
+  const u = Object.fromEntries("res ex con sat temp tint fade grain vig hal seed mono sh hi mw".split(" ").map(n => [n, U(n)]));
+  return {
+    draw(src, look, w, h) {
+      if (canvas.width !== w || canvas.height !== h) { canvas.width = w; canvas.height = h; }
+      gl.viewport(0, 0, w, h);
+      gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB, gl.RGB, gl.UNSIGNED_BYTE, src);
+      const [ex, con, sat, temp, tint, fade, grain, vig, hal, s, h2, m] = look;
+      gl.uniform2f(u.res, w, h);
+      [["ex",ex],["con",con],["sat",sat],["temp",temp],["tint",tint],["fade",fade],["grain",grain],["vig",vig],["hal",hal]].forEach(([k, v]) => gl.uniform1f(u[k], v));
+      gl.uniform1f(u.seed, Math.random() * 100);
+      gl.uniform1f(u.mono, m ? 1 : 0);
+      gl.uniform3fv(u.sh, s); gl.uniform3fv(u.hi, h2);
+      const w3 = MW[m || "M"], sum = w3[0] + w3[1] + w3[2];
+      gl.uniform3f(u.mw, w3[0] / sum, w3[1] / sum, w3[2] / sum);
+      gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+    }
+  };
+}
+
+// storage: IndexedDB, or memory when the browser refuses it
+const DB = {
+  mem: null, d: null,
+  open() {
+    if (this.d || this.mem) return Promise.resolve();
+    return new Promise(res => {
+      let r;
+      try { r = indexedDB.open("film-shelf", 1); } catch { this.mem = { rolls: new Map(), frames: [] }; return res(); }
+      r.onupgradeneeded = () => { const d = r.result; d.createObjectStore("rolls", { keyPath: "id" }); d.createObjectStore("frames", { keyPath: "k", autoIncrement: true }).createIndex("roll", "roll"); };
+      r.onsuccess = () => { this.d = r.result; res(); };
+      r.onerror = () => { this.mem = { rolls: new Map(), frames: [] }; res(); };
+    });
+  },
+  q(r) { return new Promise((res, rej) => { r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error); }); },
+  async putRoll(v) { await this.open(); if (this.mem) return this.mem.rolls.set(v.id, v); return this.q(this.d.transaction("rolls", "readwrite").objectStore("rolls").put(v)); },
+  async rolls() { await this.open(); if (this.mem) return [...this.mem.rolls.values()]; return this.q(this.d.transaction("rolls").objectStore("rolls").getAll()); },
+  async addFrame(v) { await this.open(); if (this.mem) return this.mem.frames.push(v); return this.q(this.d.transaction("frames", "readwrite").objectStore("frames").add(v)); },
+  async frames(id) { await this.open(); if (this.mem) return this.mem.frames.filter(f => f.roll === id); return this.q(this.d.transaction("frames").objectStore("frames").index("roll").getAll(id)); },
+  async delRoll(id) {
+    await this.open();
+    if (this.mem) { this.mem.rolls.delete(id); this.mem.frames = this.mem.frames.filter(f => f.roll !== id); return; }
+    const t = this.d.transaction(["rolls", "frames"], "readwrite");
+    t.objectStore("rolls").delete(id);
+    const fs = t.objectStore("frames"); const keys = await this.q(fs.index("roll").getAllKeys(id));
+    keys.forEach(k => fs.delete(k));
+    return new Promise(res => { t.oncomplete = res; t.onerror = res; });
+  }
+};
+
+let expN = store.get("xt1-exp", 24);
+let cur = null;                 // the roll in the camera: {id, nm, mk, exp, shot, developed}
+const curFilm = () => F.find(f => f.nm === cur.nm) || F[0];
+
+function drawExp() { $("expSeg").querySelectorAll("button").forEach(b => b.setAttribute("aria-checked", +b.dataset.n === expN)); }
+$("expSeg").querySelectorAll("button").forEach(b => b.onclick = () => { expN = +b.dataset.n; store.set("xt1-exp", expN); drawExp(); buzz(); });
+drawExp();
+
+async function newRoll() {
+  const f = list()[idx];
+  cur = { id: rollCount, nm: f.nm, mk: f.mk, exp: expN, shot: 0, developed: false, t: Date.now() };
+  await DB.putRoll(cur);
+  store.set("xt1-cur", cur.id);
+  markRec();
+  openCam();
+}
+function markRec() { $("recDot").hidden = !(cur && !cur.developed && cur.shot < cur.exp); }
+
+// viewfinder
+let stream = null, video = null, live = null, full = null, raf = 0, facing = "environment";
+async function openCam() {
+  if (!cur) return;
+  closeSheet();
+  $("cam").hidden = false;
+  $("camMaker").textContent = cur.mk; $("camFilm").textContent = cur.nm;
+  drawCount();
+  if (!live) live = makeRenderer($("vf"));
+  await startStream();
+}
+async function startStream() {
+  stopStream();
+  $("vfMsg").hidden = true;
+  try {
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) throw new Error("no camera api");
+    stream = await navigator.mediaDevices.getUserMedia({ audio: false, video: innerHeight > innerWidth ? { facingMode: facing, width: { ideal: 3024 }, height: { ideal: 4032 } } : { facingMode: facing, width: { ideal: 4032 }, height: { ideal: 3024 } } });
+    video = document.createElement("video");
+    video.setAttribute("playsinline", ""); video.muted = true; video.srcObject = stream;
+    await video.play();
+    if (!live) throw new Error("no webgl");
+    loop();
+  } catch (e) {
+    stopStream();
+    $("vfMsg").hidden = false;
+    $("vfMsg").innerHTML = `ช่องมองภาพสดใช้ไม่ได้ในหน้านี้<br><b>แตะปุ่มชัตเตอร์</b> เพื่อเปิดกล้อง iPhone ถ่ายทีละรูป<br>แล้วรูปจะเข้าม้วนโดยไม่โชว์ให้ดู`;
+  }
+}
+function loop() {
+  cancelAnimationFrame(raf);
+  const tick = () => {
+    if (!video || video.readyState < 2) { raf = requestAnimationFrame(tick); return; }
+    const box = $("vfBox"), vw = video.videoWidth, vh = video.videoHeight;
+    const sc = Math.min(box.clientWidth / vw, box.clientHeight / vh, 1) * Math.min(devicePixelRatio || 1, 2);
+    live.draw(video, lookOf(curFilm()), Math.round(vw * sc), Math.round(vh * sc));
+    const c = $("vf"); c.style.width = Math.round(vw * sc / Math.min(devicePixelRatio || 1, 2)) + "px";
+    raf = requestAnimationFrame(tick);
+  };
+  tick();
+}
+function stopStream() { cancelAnimationFrame(raf); if (stream) stream.getTracks().forEach(t => t.stop()); stream = null; video = null; }
+function closeCam() { stopStream(); $("cam").hidden = true; markRec(); }
+
+function drawCount() {
+  const n = Math.min(cur.shot + 1, cur.exp);
+  $("count").textContent = cur.shot >= cur.exp ? "E" : String(n).padStart(2, "0");
+  $("countOf").textContent = "/" + cur.exp;
+  $("shoot").disabled = cur.shot >= cur.exp;
+}
+
+async function develop(src, w, h, look) {
+  if (!full) { const c = document.createElement("canvas"); full = { c, r: makeRenderer(c) }; }
+  if (!full.r) throw new Error("webgl");
+  full.r.draw(src, look || lookOf(curFilm()), w, h);
+  return new Promise(res => full.c.toBlob(res, "image/jpeg", .9));
+}
+
+async function shoot() {
+  if (!cur || cur.shot >= cur.exp) return;
+  if (!video) { $("fileCap").click(); return; }
+  buzz();
+  const b = $("blink"); b.classList.remove("go"); b.offsetWidth; b.classList.add("go");
+  try {
+    const blob = await develop(video, video.videoWidth, video.videoHeight);
+    await keep(blob);
+  } catch { toast("ถ่ายไม่สำเร็จ ลองอีกครั้ง"); }
+}
+$("fileCap").onchange = async e => {
+  const file = e.target.files && e.target.files[0]; e.target.value = "";
+  if (!file) return;
+  try {
+    const img = await new Promise((res, rej) => { const i = new Image(); i.onload = () => res(i); i.onerror = rej; i.src = URL.createObjectURL(file); });
+    const k = Math.min(1, 3024 / Math.max(img.naturalWidth, img.naturalHeight));
+    const w = Math.round(img.naturalWidth * k), h = Math.round(img.naturalHeight * k);
+    const c2 = document.createElement("canvas"); c2.width = w; c2.height = h; c2.getContext("2d").drawImage(img, 0, 0, w, h);
+    URL.revokeObjectURL(img.src);
+    const b = $("blink"); b.classList.remove("go"); b.offsetWidth; b.classList.add("go");
+    await keep(await develop(c2, w, h));
+  } catch { toast("อ่านรูปไม่ได้ ลองอีกครั้ง"); }
+};
+async function keep(blob) {
+  cur.shot++;
+  await DB.addFrame({ roll: cur.id, n: cur.shot, blob, t: Date.now() });
+  await DB.putRoll(cur);
+  drawCount();
+  if (cur.shot >= cur.exp) { toast("หมดม้วน · REWIND เพื่อล้างฟิล์ม"); }
+}
+
+/* ---------------------------------------------------------------- darkroom */
+const urls = [];
+function freeUrls() { while (urls.length) URL.revokeObjectURL(urls.pop()); }
+async function openLab(devId) {
+  closeCam(); closeSheet();
+  $("lab").hidden = false;
+  await drawLab(devId);
+}
+async function drawLab(devId) {
+  freeUrls();
+  const rolls = (await DB.rolls()).sort((a, b) => b.id - a.id);
+  const box = $("rolls"); box.innerHTML = "";
+  if (!rolls.length) { box.innerHTML = `<div class="empty">ยังไม่มีม้วน เลือกฟิล์มบนชั้น กด LOAD แล้วกด "ถ่ายม้วนนี้"</div>`; return; }
+  for (const r of rolls) {
+    const el = document.createElement("div"); el.className = "roll";
+    el.innerHTML = `<div class="roll-h"><div><div class="k">ROLL ${pad(r.id)}</div><b>${r.mk} ${r.nm}</b></div><div class="n">${r.imported ? "IMPORT · " + r.shot : r.shot + "/" + r.exp}</div></div>`;
+    const acts = document.createElement("div"); acts.className = "roll-a";
+    if (!r.developed) {
+      const strip = document.createElement("div"); strip.className = "strip"; strip.innerHTML = "<i></i>"; el.append(strip);
+      if (r.shot > 0) {
+        const dev = document.createElement("button"); dev.className = "pill hot"; dev.textContent = "ล้างฟิล์ม";
+        dev.onclick = () => runDevelop(r, el, strip);
+        acts.append(dev);
+      }
+      if (r.shot < r.exp) {
+        const go = document.createElement("button"); go.className = "pill"; go.textContent = "ถ่ายต่อ";
+        go.onclick = () => { cur = r; store.set("xt1-cur", r.id); $("lab").hidden = true; openCam(); };
+        acts.append(go);
+      }
+    } else {
+      const frames = (await DB.frames(r.id)).sort((a, b) => a.n - b.n);
+      const grid = document.createElement("div"); grid.className = "sheet-grid";
+      frames.forEach(fr => {
+        const u = URL.createObjectURL(fr.blob); urls.push(u);
+        const b = document.createElement("button");
+        b.innerHTML = `<img src="${u}" alt="รูปที่ ${fr.n}" loading="lazy"><span>${fr.n}</span>`;
+        b.onclick = () => openViewer(u, fr.blob, `${r.nm} · ${fr.n}/${frames.length}`, `roll${pad(r.id)}-${fr.n}.jpg`);
+        grid.append(b);
+      });
+      el.append(grid);
+      const all = document.createElement("button"); all.className = "pill hot"; all.textContent = "บันทึกทั้งม้วน";
+      all.onclick = () => saveFiles(frames.map(fr => new File([fr.blob], `roll${pad(r.id)}-${fr.n}.jpg`, { type: "image/jpeg" })));
+      acts.append(all);
+    }
+    const del = document.createElement("button"); del.className = "pill"; del.textContent = "ลบม้วน";
+    del.onclick = async () => {
+      if (del.dataset.arm) { await DB.delRoll(r.id); if (cur && cur.id === r.id) { cur = null; markRec(); } drawLab(); }
+      else { del.dataset.arm = 1; del.textContent = "แตะอีกครั้งเพื่อลบ"; setTimeout(() => { delete del.dataset.arm; del.textContent = "ลบม้วน"; }, 3000); }
+    };
+    acts.append(del);
+    el.append(acts);
+    box.append(el);
+    if (devId === r.id && !r.developed && r.shot > 0) runDevelop(r, el, el.querySelector(".strip"));
+  }
+}
+async function runDevelop(r, el, strip) {
+  el.querySelectorAll(".roll-a button").forEach(b => b.disabled = true);
+  const line = document.createElement("div"); line.className = "dev-line"; el.insertBefore(line, strip.nextSibling);
+  const bar = strip.querySelector("i");
+  const steps = ["DEVELOPER", "STOP", "FIX", "WASH"];
+  const per = Math.max(120, Math.min(350, 3200 / r.shot));
+  for (let i = 1; i <= r.shot; i++) {
+    line.textContent = `${steps[Math.min(3, Math.floor((i - 1) / r.shot * 4))]} · FRAME ${i}/${r.shot}`;
+    bar.style.width = (i / r.shot * 100) + "%";
+    await new Promise(res => setTimeout(res, per));
+  }
+  r.developed = true; await DB.putRoll(r);
+  if (cur && cur.id === r.id) { cur = r; markRec(); }
+  buzz(); drawLab();
+}
+
+let vBlob = null, vName = "";
+function openViewer(u, blob, info, name) { vBlob = blob; vName = name; $("vImg").src = u; $("vInfo").textContent = info; $("viewer").hidden = false; }
+$("vClose").onclick = () => { $("viewer").hidden = true; };
+$("vSave").onclick = () => saveFiles([new File([vBlob], vName, { type: "image/jpeg" })]);
+
+async function saveFiles(files) {
+  try {
+    if (navigator.canShare && navigator.canShare({ files })) { await navigator.share({ files }); return; }
+  } catch (e) { if (e && e.name === "AbortError") return; }
+  try {
+    const dl = window.claude && await window.claude.use("downloads");
+    if (dl) { for (const f of files) await dl.save({ filename: f.name, data: f }); return; }
+  } catch {}
+  toast("กดค้างที่รูป แล้วเลือก 'บันทึกลงรูปภาพ'");
+}
+
+$("shootRoll").onclick = newRoll;
+
+/* ---------------------------------------------------------------- import: develop photos already on the phone */
+const ID_LOOK = [0,0,1,0,0,0,0,0,0,[0,0,0],[0,0,0]];
+const ed = { imgs: [], i: 0, f: null, hold: false, r: null, ready: null };
+function startImport(f) { ed.f = f || ed.f || list()[idx]; $("filePick").click(); }
+$("importRoll").onclick = () => startImport(list()[idx]);
+$("labImport").onclick = () => startImport(ed.f || list()[idx]);
+$("edAdd").onclick = () => $("filePick").click();
+
+async function readImage(file) {
+  const u = URL.createObjectURL(file);
+  try {
+    const img = await new Promise((res, rej) => { const i = new Image(); i.onload = () => res(i); i.onerror = rej; i.src = u; });
+    const k = Math.min(1, 4032 / Math.max(img.naturalWidth, img.naturalHeight));
+    const w = Math.round(img.naturalWidth * k), h = Math.round(img.naturalHeight * k);
+    const c = document.createElement("canvas"); c.width = w; c.height = h; c.getContext("2d").drawImage(img, 0, 0, w, h);
+    const t = document.createElement("canvas"), tk = 120 / Math.max(w, h); t.width = Math.round(w * tk); t.height = Math.round(h * tk);
+    t.getContext("2d").drawImage(c, 0, 0, t.width, t.height);
+    return { c, w, h, thumb: t.toDataURL("image/jpeg", .7), name: (file.name || "photo").replace(/\.[^.]+$/, "") };
+  } finally { URL.revokeObjectURL(u); }
+}
+$("filePick").onchange = async e => {
+  const files = [...(e.target.files || [])]; e.target.value = "";
+  if (!files.length) return;
+  if (!ed.f) ed.f = list()[idx];
+  closeSheet(); $("lab").hidden = true;
+  $("edit").hidden = false;
+  toast(`กำลังเปิด ${files.length} รูป`);
+  const start = ed.imgs.length;
+  for (const f of files) { try { ed.imgs.push(await readImage(f)); } catch { toast("มีรูปที่เปิดไม่ได้ ข้ามไป"); } }
+  if (!ed.imgs.length) { closeEdit(); return; }
+  ed.i = Math.min(start, ed.imgs.length - 1);
+  if (!ed.r) ed.r = makeRenderer($("edCv"));
+  drawFilms(); drawThumbs(); renderEd();
+};
+
+function drawFilms() {
+  const box = $("edFilms"); box.innerHTML = "";
+  F.forEach(f => {
+    const b = document.createElement("button"); b.className = "fchip";
+    b.setAttribute("aria-pressed", f === ed.f);
+    b.innerHTML = `<i style="background:${f.c[0]};--b:${f.c[1]}"></i><span>${f.nm}</span>`;
+    b.onclick = () => { ed.f = f; ed.ready = null; buzz(); box.querySelectorAll(".fchip").forEach(x => x.setAttribute("aria-pressed", x === b)); renderEd(); };
+    box.append(b);
+  });
+  const on = box.querySelector('[aria-pressed="true"]');
+  if (on) on.scrollIntoView({ inline: "center", block: "nearest" });
+}
+function drawThumbs() {
+  const box = $("edThumbs"); box.innerHTML = "";
+  box.hidden = ed.imgs.length < 2;
+  ed.imgs.forEach((im, i) => {
+    const b = document.createElement("button"); b.setAttribute("aria-pressed", i === ed.i);
+    b.innerHTML = `<img src="${im.thumb}" alt="รูปที่ ${i + 1}">`;
+    b.onclick = () => { ed.i = i; ed.ready = null; drawThumbs(); renderEd(); };
+    box.append(b);
+  });
+  $("edSaveAll").textContent = ed.imgs.length > 1 ? `บันทึกทั้งหมด (${ed.imgs.length})` : "บันทึก";
+  $("edSaveOne").hidden = ed.imgs.length < 2;
+}
+function renderEd() {
+  const im = ed.imgs[ed.i]; if (!im || !ed.r) return;
+  $("edMaker").textContent = ed.f.mk; $("edFilm").textContent = ed.f.nm;
+  const box = $("edBox"), dpr = Math.min(devicePixelRatio || 1, 2);
+  const sc = Math.min(box.clientWidth / im.w, box.clientHeight / im.h, 1);
+  ed.r.draw(im.c, ed.hold ? ID_LOOK : lookOf(ed.f), Math.round(im.w * sc * dpr), Math.round(im.h * sc * dpr));
+  $("edCv").style.width = Math.round(im.w * sc) + "px";
+  const hint = $("edHint"); hint.classList.toggle("orig", ed.hold); hint.textContent = ed.hold ? "รูปเดิม" : "กดค้างที่รูปเพื่อดูรูปเดิม";
+}
+const edBox = $("edBox");
+edBox.addEventListener("pointerdown", () => { ed.hold = true; renderEd(); });
+["pointerup", "pointercancel", "pointerleave"].forEach(ev => edBox.addEventListener(ev, () => { if (ed.hold) { ed.hold = false; renderEd(); } }));
+edBox.addEventListener("contextmenu", e => e.preventDefault());
+addEventListener("resize", () => { if (!$("edit").hidden) renderEd(); });
+
+async function renderFiles(ims) {
+  const out = [];
+  for (const im of ims) {
+    const blob = await develop(im.c, im.w, im.h, lookOf(ed.f));
+    out.push({ blob, file: new File([blob], `${im.name}-${ed.f.nm.replace(/\s+/g, "")}.jpg`, { type: "image/jpeg" }) });
+  }
+  return out;
+}
+async function keepImported(done) {
+  rollCount++; store.set("xt1-roll", rollCount); $("rollTop").textContent = pad(rollCount);
+  const r = { id: rollCount, nm: ed.f.nm, mk: ed.f.mk, exp: done.length, shot: done.length, developed: true, imported: true, t: Date.now() };
+  await DB.putRoll(r);
+  for (let i = 0; i < done.length; i++) await DB.addFrame({ roll: r.id, n: i + 1, blob: done[i].blob, t: Date.now() });
+}
+// iPhone only opens the share sheet straight from a tap, so: first tap develops, the share follows at once,
+// and if Safari refuses because the tap went stale, the button turns into "tap again to save".
+async function edSave(which, btn) {
+  const key = which + ":" + ed.i + ":" + ed.f.nm;
+  if (ed.ready && ed.ready.key === key) { const files = ed.ready.files; ed.ready = null; resetBtns(); return saveFiles(files); }
+  const ims = which === "all" ? ed.imgs : [ed.imgs[ed.i]];
+  const label = btn.textContent; btn.disabled = true; btn.textContent = "กำลังล้าง…";
+  try {
+    const done = await renderFiles(ims);
+    await keepImported(done);
+    const files = done.map(d => d.file);
+    btn.disabled = false; btn.textContent = label;
+    try {
+      if (navigator.canShare && navigator.canShare({ files })) { await navigator.share({ files }); return; }
+    } catch (e) {
+      if (e && e.name === "AbortError") return;
+      ed.ready = { key, files }; btn.textContent = "ล้างเสร็จ · แตะเพื่อบันทึก"; return;
+    }
+    saveFiles(files);
+  } catch { btn.disabled = false; btn.textContent = label; toast("ล้างไม่สำเร็จ ลองใหม่อีกครั้ง"); }
+}
+function resetBtns() { drawThumbs(); }
+$("edSaveAll").onclick = e => edSave("all", e.currentTarget);
+$("edSaveOne").onclick = e => edSave("one", e.currentTarget);
+function closeEdit() { $("edit").hidden = true; ed.imgs = []; ed.i = 0; ed.ready = null; }
+$("edClose").onclick = closeEdit;
+$("shoot").onclick = shoot;
+$("camClose").onclick = closeCam;
+$("camFlip").onclick = () => { facing = facing === "environment" ? "user" : "environment"; $("fileCap").setAttribute("capture", facing); startStream(); };
+$("rewind").onclick = () => { if (!cur || cur.shot === 0) { toast("ม้วนนี้ยังไม่ได้ถ่าย"); return; } const id = cur.id; openLab(id); };
+$("printsBtn").onclick = () => openLab();
+$("labBack").onclick = () => { $("lab").hidden = true; freeUrls(); };
+$("camBadge").onclick = () => { if (cur && !cur.developed && cur.shot < cur.exp) openCam(); else toast("เลือกฟิล์ม กด LOAD แล้วกด 'ถ่ายม้วนนี้'"); };
+document.addEventListener("visibilitychange", () => { if (document.hidden) stopStream(); else if (!$("cam").hidden) startStream(); });
+
+(async () => {
+  const id = store.get("xt1-cur", null);
+  if (id === null) return;
+  const r = (await DB.rolls()).find(x => x.id === id);
+  if (r) { cur = r; markRec(); }
+})();
+
+const last = store.get("xt1-last", null);
+if (last && SHELVES.some(s => s[0] === last.group)) { group = last.group; idx = Math.min(last.idx, list().length - 1); }
+$("rollTop").textContent = pad(rollCount);
+build();
+</script>
+
+<script>if("serviceWorker" in navigator) addEventListener("load",()=>navigator.serviceWorker.register("sw.js").catch(()=>{}));</script>
+</body>
+</html>
