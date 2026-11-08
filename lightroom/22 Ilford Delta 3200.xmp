@@ -1,0 +1,91 @@
+<x:xmpmeta xmlns:x="adobe:ns:meta/" x:xmptk="Adobe XMP Core 7.0-c000 1.000000, 0000/00/00-00:00:00        ">
+ <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
+  <rdf:Description rdf:about=""
+    xmlns:crs="http://ns.adobe.com/camera-raw-settings/1.0/"
+   crs:PresetType="Normal"
+   crs:Cluster=""
+   crs:UUID="668DFBCDD33B4F52B44BE0EA216FF1FB"
+   crs:SupportsAmount2="True"
+   crs:SupportsAmount="True"
+   crs:SupportsColor="True"
+   crs:SupportsMonochrome="True"
+   crs:SupportsHighDynamicRange="True"
+   crs:SupportsNormalDynamicRange="True"
+   crs:SupportsSceneReferred="True"
+   crs:SupportsOutputReferred="True"
+   crs:RequiresRGBTables="False"
+   crs:CameraModelRestriction=""
+   crs:Copyright=""
+   crs:ContactInfo=""
+   crs:Version="16.0"
+   crs:ProcessVersion="11.0"
+   crs:Exposure2012="+0.10"
+   crs:Contrast2012="+18"
+   crs:Highlights2012="+5"
+   crs:Shadows2012="-25"
+   crs:Whites2012="0"
+   crs:Blacks2012="+2"
+   crs:Clarity2012="+8"
+   crs:Dehaze="0"
+   crs:Texture="0"
+   crs:Vibrance="0"
+   crs:Saturation="0"
+   crs:IncrementalTemperature="0"
+   crs:IncrementalTint="0"
+   crs:GrainAmount="62"
+   crs:GrainSize="47"
+   crs:GrainFrequency="50"
+   crs:PostCropVignetteAmount="-21"
+   crs:PostCropVignetteMidpoint="45"
+   crs:PostCropVignetteFeather="60"
+   crs:PostCropVignetteRoundness="0"
+   crs:PostCropVignetteStyle="1"
+   crs:PostCropVignetteHighlightContrast="0"
+   crs:ConvertToGrayscale="True"
+   crs:GrayMixerRed="+10"
+   crs:GrayMixerOrange="+8"
+   crs:GrayMixerYellow="+20"
+   crs:GrayMixerGreen="0"
+   crs:GrayMixerAqua="-10"
+   crs:GrayMixerBlue="-30"
+   crs:GrayMixerPurple="-10"
+   crs:GrayMixerMagenta="+5"
+   crs:ToneCurveName2012="Custom"
+   crs:HasSettings="True">
+   <crs:Name>
+    <rdf:Alt>
+     <rdf:li xml:lang="x-default">22 Ilford Delta 3200</rdf:li>
+    </rdf:Alt>
+   </crs:Name>
+   <crs:ShortName>
+    <rdf:Alt>
+     <rdf:li xml:lang="x-default"/>
+    </rdf:Alt>
+   </crs:ShortName>
+   <crs:SortName>
+    <rdf:Alt>
+     <rdf:li xml:lang="x-default"/>
+    </rdf:Alt>
+   </crs:SortName>
+   <crs:Group>
+    <rdf:Alt>
+     <rdf:li xml:lang="x-default">M-Film · B&amp;W</rdf:li>
+    </rdf:Alt>
+   </crs:Group>
+   <crs:Description>
+    <rdf:Alt>
+     <rdf:li xml:lang="x-default">M-Film look for Ilford Delta 3200</rdf:li>
+    </rdf:Alt>
+   </crs:Description>
+   <crs:ToneCurvePV2012>
+    <rdf:Seq>
+      <rdf:li>0, 10</rdf:li>
+      <rdf:li>64, 56</rdf:li>
+      <rdf:li>128, 128</rdf:li>
+      <rdf:li>192, 200</rdf:li>
+      <rdf:li>255, 251</rdf:li>
+    </rdf:Seq>
+   </crs:ToneCurvePV2012>
+  </rdf:Description>
+ </rdf:RDF>
+</x:xmpmeta>
